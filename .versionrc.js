@@ -9,4 +9,8 @@ module.exports = {
     { type: "perf", hidden: true },
     { type: "test", hidden: true },
   ],
+  bumpFiles: [
+    { filename: "package.json", type: "json" },
+    { filename: "./src/core/package.json", type: "json" },
+  ],
 };

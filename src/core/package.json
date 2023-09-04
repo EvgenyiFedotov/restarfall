@@ -1,7 +1,7 @@
 {
   "name": "restarfall",
   "version": "0.1.0",
-  "description": "Template fot ts lib",
+  "description": "Restarfall is a JavaScript library for creating business logic and data management.",
   "exports": {
     ".": {
       "import": "./dist/cjs/index.js",
