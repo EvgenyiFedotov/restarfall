@@ -1,10 +1,7 @@
 name: Publish  to npmjs
-on:
-  push:
-    tags:
-      - v**
+on: workflow_dispatch
 jobs:
-  core:
+  restarfall-repo:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -12,15 +9,25 @@ jobs:
         with:
           node-version: "16.x"
           registry-url: "https://registry.npmjs.org"
-      - name: checking
-        working-directory: ./src/core
+      - run: npm ci
+      - run: npm run lint
+  restarfall:
+    needs: [restarfall-repo]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: "16.x"
+          registry-url: "https://registry.npmjs.org"
+      - name: test & build
+        working-directory: ./packages/restarfall
         run: |
           npm ci
-          npm run lint
           npm run test
           npm run build
       - name: publish
-        working-directory: ./src/core
+        working-directory: ./packages/restarfall
         run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

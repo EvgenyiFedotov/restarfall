@@ -18,6 +18,9 @@ const common = {
           },
           {
             loader: "ts-loader",
+            options: {
+              configFile: "../tsconfig.json",
+            },
           },
         ],
       },
