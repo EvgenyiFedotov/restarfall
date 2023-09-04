@@ -1,6 +1,10 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
+cd ./src/core
+
 npm run lint
 npm run test
 npm run build
+
+cd ../..

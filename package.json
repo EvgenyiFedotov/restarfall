@@ -1,47 +1,17 @@
 {
-  "name": "template-ts-lib",
-  "version": "0.1.1-0",
-  "description": "Template fot ts lib",
-  "exports": {
-    ".": {
-      "import": "./dist/cjs/index.js",
-      "require": "./dist/mjs/index.js",
-      "default": "./dist/cjs/index.js"
-    }
-  },
-  "main": "dist/cjs/index.js",
-  "module": "dist/mjs/index.js",
-  "typings": "dist/types/index.d.ts",
-  "files": [
-    "dist"
-  ],
+  "name": "restarfall-repo",
+  "version": "0.1.0",
   "scripts": {
     "prepare": "husky install",
-    "lint": "eslint -c ./.eslintrc.js ./src",
-    "test": "jest",
-    "build": "rm -fr ./dist && webpack -c ./webpack/prod.js ",
-    "start": "rm -fr ./dist && webpack -c ./webpack/dev.js --watch",
     "prerelease": "standard-version --prerelease",
     "release": "standard-version"
   },
-  "author": "",
+  "author": "Evgenii Fedotov",
   "license": "MIT",
   "devDependencies": {
-    "@babel/core": "^7.19.0",
-    "@babel/preset-env": "^7.19.0",
-    "@babel/preset-typescript": "^7.18.6",
     "@commitlint/cli": "^17.7.1",
     "@commitlint/config-conventional": "^17.7.0",
-    "@types/jest": "^29.5.4",
-    "babel-loader": "^8.2.5",
-    "eslint": "^8.47.0",
-    "eslint-kit": "^10.5.0",
     "husky": "^8.0.3",
-    "jest": "^29.6.3",
-    "prettier": "^3.0.2",
-    "standard-version": "^9.5.0",
-    "ts-loader": "^9.4.4",
-    "webpack": "^5.74.0",
-    "webpack-cli": "^4.10.0"
+    "standard-version": "^9.5.0"
   }
 }
