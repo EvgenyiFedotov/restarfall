@@ -25,7 +25,7 @@ npm run release
 ### Prerelase
 
 ```sh
-npm run prerelease && git push --follow-tags origin main
+npm run pre-release && git push --follow-tags origin main
 ```
 
 ### Relase

@@ -3,7 +3,7 @@
   "version": "0.1.1",
   "scripts": {
     "prepare": "husky install",
-    "prerelease": "standard-version --prerelease",
+    "pre-release": "standard-version --prerelease",
     "release": "standard-version"
   },
   "author": "Evgenii Fedotov",
