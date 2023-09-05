@@ -1,6 +1,6 @@
 {
   "name": "restarfall-react",
-  "version": "0.1.3",
+  "version": "0.1.6",
   "license": "MIT",
   "author": "Evgenii Fedotov",
   "description": "Restarfall is a JavaScript library for creating business logic and data management.",
