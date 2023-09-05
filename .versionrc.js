@@ -11,7 +11,7 @@ module.exports = {
   ],
   bumpFiles: [
     { filename: "package.json", type: "json" },
-    { filename: "./packges/restarfall/package.json", type: "json" },
-    { filename: "./packges/restarfall-react/package.json", type: "json" },
+    { filename: "./packages/restarfall/package.json", type: "json" },
+    { filename: "./packages/restarfall-react/package.json", type: "json" },
   ],
 };
