@@ -25,7 +25,7 @@ describe("useDepend", () => {
     const shape = createShape();
 
     shape.attach(component());
-    shape.callEvent(send, void 0);
+    shape.callEvent(send, undefined);
 
     expect(body.mock.calls).toHaveLength(2);
   });
@@ -50,7 +50,7 @@ describe("useDepend", () => {
     const body = jest.fn(() => {
       useDepend(
         $store,
-        (value, { payload }) => payload === "test" && value === "run"
+        (value, { payload }) => payload === "test" && value === "run",
       );
       return [];
     });
@@ -190,7 +190,7 @@ describe("useTake", () => {
 describe("usePromise", () => {
   test("outside component", () => {
     expect(() =>
-      usePromise(new Promise<void>((resolve) => resolve()))
+      usePromise(new Promise<void>((resolve) => resolve())),
     ).toThrow();
   });
 
@@ -205,7 +205,7 @@ describe("usePromise", () => {
     });
     const shape = createShape();
 
-    await shape.attach(component())?.wait();
+    await shape.attach(component()).wait();
 
     expect(handler.mock.calls).toHaveLength(1);
   });
