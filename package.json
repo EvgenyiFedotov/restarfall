@@ -2,7 +2,7 @@
   "name": "restarfall-repo",
   "license": "MIT",
   "author": "Evgenii Fedotov",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "scripts": {
     "prepare": "husky install",
     "lint": "eslint -c ./.eslintrc.js ./packages",
