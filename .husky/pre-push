@@ -4,8 +4,11 @@
 npm run lint
 
 cd ./packages/restarfall
-
 npm run test
 npm run build
+cd ../..
 
+cd ./packages/restarfall-react
+npm run test
+npm run build
 cd ../..

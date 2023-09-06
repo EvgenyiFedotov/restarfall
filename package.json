@@ -6,6 +6,7 @@
   "scripts": {
     "prepare": "husky install",
     "lint": "eslint -c ./.eslintrc.js ./packages",
+    "update-depends": "node ./scripts/update-depends.js",
     "pre-release": "standard-version --prerelease",
     "release": "standard-version"
   },

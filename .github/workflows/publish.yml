@@ -12,6 +12,7 @@ jobs:
           cache: "npm"
       - run: npm ci
       - run: npm run lint
+      - run: npm run update-depends
   restarfall:
     needs: [restarfall-repo]
     runs-on: ubuntu-latest
@@ -32,6 +33,29 @@ jobs:
           npm run build
       - name: publish
         working-directory: ./packages/restarfall
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+  restarfall-react:
+    needs: [restarfall-repo, restarfall]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: "16.x"
+          registry-url: "https://registry.npmjs.org"
+          cache: "npm"
+      - name: install root
+        run: npm ci
+      - name: test & build
+        working-directory: ./packages/restarfall-react
+        run: |
+          npm ci
+          npm run test
+          npm run build
+      - name: publish
+        working-directory: ./packages/restarfall-react
         run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
