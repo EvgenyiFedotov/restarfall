@@ -21,5 +21,15 @@
     "test": "jest",
     "build": "rm -fr ./dist && webpack -c ./webpack/prod.js ",
     "start": "rm -fr ./dist && webpack -c ./webpack/dev.js --watch"
+  },
+  "peerDependencies": {
+    "react": "18.2.0",
+    "restarfall": "file:../restarfall"
+  },
+  "devDependencies": {
+    "@babel/preset-react": "^7.22.15",
+    "@testing-library/react": "^14.0.0",
+    "@types/react": "^18.2.21",
+    "jest-environment-jsdom": "^29.6.4"
   }
 }
