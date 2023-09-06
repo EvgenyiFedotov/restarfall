@@ -49,7 +49,6 @@ interface ShapePrivate {
     listener: EventListener<Value>,
   ) => void;
   unlinkInstance: (instance: ComponentInstance) => void;
-  getEventPayload: <Value>(event: Event<Value>) => { payload?: Value };
   isCalledEvent: <Value>(event: Event<Value>) => boolean;
 }
 
@@ -66,6 +65,7 @@ interface Shape {
   setValue: <Value>(store: Store<Value>, value: Value) => Shape;
 
   // Events
+  getEventState: <Value>(event: Event<Value>) => { payload?: Value };
   listenEvent: <Value>(
     event: Event<Value>,
     listener: EventListener<Value>,
@@ -129,11 +129,6 @@ const createShape = (parent?: Shape): Shape => {
       });
       state.depends.delete(instance);
     },
-    getEventPayload: (event) => {
-      return state.payloads.has(event)
-        ? { payload: state.payloads.get(event) }
-        : {};
-    },
     isCalledEvent: (event) => {
       return state.calledEvent === event;
     },
@@ -184,6 +179,11 @@ const createShape = (parent?: Shape): Shape => {
     },
 
     // Events
+    getEventState: (event) => {
+      return state.payloads.has(event)
+        ? { payload: state.payloads.get(event) }
+        : {};
+    },
     listenEvent: (event, listener) => {
       const eventListeners = state.events.get(event) ?? new Set();
 
@@ -198,7 +198,7 @@ const createShape = (parent?: Shape): Shape => {
       state.events.get(event)?.delete(listener);
     },
     callEvent: (event, value) => {
-      const prev = privateApi.getEventPayload(event);
+      const prev = shape.getEventState(event);
       const prevCalledEvent = state.calledEvent;
 
       state.calledEvent = event;
@@ -242,7 +242,7 @@ const createShape = (parent?: Shape): Shape => {
         deleteRawValue: privateApi.deleteRawValue,
         getValue: shape.getValue,
         setValue: shape.setValue,
-        getEventState: privateApi.getEventPayload,
+        getEventState: shape.getEventState,
         isCallEvent: privateApi.isCalledEvent,
         callEvent: shape.callEvent,
       };
