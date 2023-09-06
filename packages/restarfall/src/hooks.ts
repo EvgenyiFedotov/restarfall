@@ -16,7 +16,7 @@ const getInstance = (): ComponentInstance => {
 
 const useDepend = <Value>(
   unit: Event<Value> | Store<Value>,
-  filter: DependFilter<Value> | false | null = null,
+  filter?: DependFilter<Value>,
 ): {
   called: boolean;
   payload?: Value;

@@ -22,13 +22,13 @@ interface ComponentElement {
 
 type Children = null | ComponentElement | ComponentElement[];
 
-type DependFilter<Value> = (
-  value: Value,
-  params: { payload?: Value },
-) => boolean;
+type DependFilter<Value> =
+  | ((value: Value, params: { payload?: Value }) => boolean)
+  | undefined
+  | false;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-type Depends = Map<Event<any>, DependFilter<any> | false | null>;
+type Depends = Map<Event<any>, DependFilter<any>>;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Promises = Set<Promise<any>>;
@@ -98,7 +98,6 @@ const createComponent = <Args extends unknown[]>(
       instance.depends = new Map();
       instance.promises = new Set();
       instance.children = [];
-      // instance.allChidlren = [];
 
       stackInstances.push(instance);
 

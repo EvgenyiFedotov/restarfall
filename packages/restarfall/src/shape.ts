@@ -266,10 +266,7 @@ const createShape = (parent?: Shape): Shape => {
 
       const createListen =
         (instance: ComponentInstance) =>
-        <Value>(
-          filter: DependFilter<Value> | null | false,
-          event: Event<Value>,
-        ): void => {
+        <Value>(filter: DependFilter<Value>, event: Event<Value>): void => {
           const listener: EventListener<Value> = (value, prev) => {
             // filter
             if (filter === false) return;
