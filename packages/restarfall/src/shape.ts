@@ -63,6 +63,7 @@ interface Shape {
   hasValue: <Value>(store: Store<Value>) => boolean;
   getValue: <Value>(store: Store<Value>) => Value;
   setValue: <Value>(store: Store<Value>, value: Value) => Shape;
+  changeValue: <Value>(store: Store<Value>, value: Value) => Shape;
 
   // Events
   getEventState: <Value>(event: Event<Value>) => { payload?: Value };
@@ -177,6 +178,16 @@ const createShape = (parent?: Shape): Shape => {
 
       return shape;
     },
+    changeValue: (store, value) => {
+      const prevValue = shape.getValue(store);
+
+      if (prevValue === value) return shape;
+
+      shape.setValue(store, value);
+      shape.callEvent(store.changed, value);
+
+      return shape;
+    },
 
     // Events
     getEventState: (event) => {
@@ -242,6 +253,7 @@ const createShape = (parent?: Shape): Shape => {
         deleteRawValue: privateApi.deleteRawValue,
         getValue: shape.getValue,
         setValue: shape.setValue,
+        changeValue: shape.changeValue,
         getEventState: shape.getEventState,
         isCallEvent: privateApi.isCalledEvent,
         callEvent: shape.callEvent,
@@ -306,5 +318,5 @@ const createShape = (parent?: Shape): Shape => {
   return shape;
 };
 
-export { createShape };
 export type { Shape };
+export { createShape };

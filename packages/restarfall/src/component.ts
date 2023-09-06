@@ -9,20 +9,20 @@ type Deserialize = (
   getValue: (key: string) => { value?: unknown },
 ) => Partial<Record<string, { store: Store<unknown>; value: unknown }>>;
 
-export interface Component<Args extends unknown[]> {
+interface Component<Args extends unknown[]> {
   (...args: Args): ComponentElement;
   type: "component";
 }
 
-export interface ComponentElement {
+interface ComponentElement {
   readonly type: "component-element";
   readonly key: string | null;
   readonly index: number;
 }
 
-export type Children = null | ComponentElement | ComponentElement[];
+type Children = null | ComponentElement | ComponentElement[];
 
-export type DependFilter<Value> = (
+type DependFilter<Value> = (
   value: Value,
   params: { payload?: Value },
 ) => boolean;
@@ -33,7 +33,7 @@ type Depends = Map<Event<any>, DependFilter<any> | false | null>;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Promises = Set<Promise<any>>;
 
-export interface ComponentInstance {
+interface ComponentInstance {
   type: "component-instance";
   api: ComponentApi; // del
   element: ComponentElement;
@@ -43,11 +43,12 @@ export interface ComponentInstance {
   allChidlren: ComponentInstance[];
 }
 
-export interface ComponentApi {
+interface ComponentApi {
   getRawValue: (key: string) => { value?: unknown };
   deleteRawValue: (key: string) => void;
   getValue: <Value>(store: Store<Value>) => Value;
   setValue: <Value>(store: Store<Value>, value: Value) => void;
+  changeValue: <Value>(store: Store<Value>, value: Value) => void;
   getEventState: <Value>(event: Event<Value>) => { payload?: Value };
   callEvent: <Value>(event: Event<Value>, value: Value) => void;
   isCallEvent: <Value>(event: Event<Value>) => boolean;
@@ -60,7 +61,7 @@ type ComponentReattach = (
 
 type ComponentAttach = (api: ComponentApi) => ComponentInstance;
 
-export const elements: WeakMap<
+const elements: WeakMap<
   ComponentElement,
   {
     serialize: Serialize | null;
@@ -70,13 +71,13 @@ export const elements: WeakMap<
   }
 > = new WeakMap();
 
-export const stackInstances: ComponentInstance[] = [];
+const stackInstances: ComponentInstance[] = [];
 
-export const toChildren = (value: Children): ComponentElement[] => {
+const toChildren = (value: Children): ComponentElement[] => {
   return value ? (Array.isArray(value) ? value : [value]) : [];
 };
 
-export const createComponent = <Args extends unknown[]>(
+const createComponent = <Args extends unknown[]>(
   body: (...args: Args) => Children,
   options?: {
     key?: string | null;
@@ -156,3 +157,13 @@ export const createComponent = <Args extends unknown[]>(
 
   return component;
 };
+
+export type {
+  Component,
+  ComponentElement,
+  Children,
+  DependFilter,
+  ComponentInstance,
+  ComponentApi,
+};
+export { elements, stackInstances, toChildren, createComponent };

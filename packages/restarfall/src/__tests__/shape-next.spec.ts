@@ -14,6 +14,7 @@ describe("create", () => {
     expect(shape.hasValue).toBeInstanceOf(Function);
     expect(shape.getValue).toBeInstanceOf(Function);
     expect(shape.setValue).toBeInstanceOf(Function);
+    expect(shape.changeValue).toBeInstanceOf(Function);
     expect(shape.getEventState).toBeInstanceOf(Function);
     expect(shape.listenEvent).toBeInstanceOf(Function);
     expect(shape.unlistenEvent).toBeInstanceOf(Function);
@@ -42,6 +43,10 @@ describe("values", () => {
 
     expect(childShape.hasValue($store)).toBe(true);
     expect(childShape.getValue($store)).toBe("test");
+  });
+
+  test("change", () => {
+    expect(shape.changeValue($store, "name").getValue($store)).toBe("name");
   });
 });
 

@@ -14,7 +14,7 @@ const getInstance = (): ComponentInstance => {
   return instance;
 };
 
-export const useDepend = <Value>(
+const useDepend = <Value>(
   unit: Event<Value> | Store<Value>,
   filter: DependFilter<Value> | false | null = null,
 ): {
@@ -41,7 +41,7 @@ export const useDepend = <Value>(
     : { called };
 };
 
-export const useDispatch = <Value>(
+const useDispatch = <Value>(
   unit: Event<Value> | Store<Value>,
 ): ((value: Value) => void) => {
   const instance = getInstance();
@@ -50,20 +50,12 @@ export const useDispatch = <Value>(
     if (unit.type === "event") {
       instance.api.callEvent(unit, value);
     } else {
-      const prevValue = instance.api.getValue(unit);
-
-      if (prevValue === value) return;
-
-      instance.api.setValue(unit, value);
-      instance.api.callEvent(unit.changed, value);
+      instance.api.changeValue(unit, value);
     }
   };
 };
 
-export const useValue = <Value>(
-  store: Store<Value>,
-  bindDepend = false,
-): Value => {
+const useValue = <Value>(store: Store<Value>, bindDepend = false): Value => {
   const instance = getInstance();
 
   if (bindDepend) useDepend(store);
@@ -71,16 +63,18 @@ export const useValue = <Value>(
   return instance.api.getValue(store);
 };
 
-export const useTake = <Value>(store: Store<Value>): (() => Value) => {
+const useTake = <Value>(store: Store<Value>): (() => Value) => {
   const instance = getInstance();
 
   return () => instance.api.getValue(store);
 };
 
-export const usePromise = <Value>(promise: Promise<Value>): Promise<Value> => {
+const usePromise = <Value>(promise: Promise<Value>): Promise<Value> => {
   const instance = getInstance();
 
   instance.promises.add(promise);
 
   return promise;
 };
+
+export { useDepend, useDispatch, useValue, useTake, usePromise };

@@ -1,13 +1,13 @@
 import { Event, createEvent } from "./event";
 
-export interface Store<Value> {
+interface Store<Value> {
   readonly type: "store";
   readonly key?: string | null;
   readonly initialValue: Value;
   readonly changed: Event<Value>;
 }
 
-export const createStore = <Value>(
+const createStore = <Value>(
   value: Value,
   options?: { key?: string | null },
 ): Store<Value> => {
@@ -28,3 +28,6 @@ export const createStore = <Value>(
     },
   };
 };
+
+export type { Store };
+export { createStore };

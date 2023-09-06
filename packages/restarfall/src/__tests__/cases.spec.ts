@@ -179,10 +179,8 @@ test("unlink / link chilren", () => {
   const shape = createShape();
 
   shape.attach(root());
-  shape.setValue($store1, "test");
-  shape.callEvent($store1.changed, "test");
-  shape.setValue($store2, "test");
-  shape.callEvent($store2.changed, "test");
+  shape.changeValue($store1, "test");
+  shape.changeValue($store2, "test");
 
   expect(child1.body.mock.calls).toHaveLength(3);
   expect(child2.body.mock.calls).toHaveLength(2);

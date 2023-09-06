@@ -37,12 +37,7 @@ const useChange = <Value,>(store: Store<Value>): Dispatch<Value> => {
   const shape = useContext(context);
   const dispatch: Dispatch<Value> = useCallback(
     (value) => {
-      const prevValue = shape.getValue(store);
-
-      if (prevValue === value) return;
-
-      shape.setValue(store, value);
-      shape.callEvent(store.changed, value);
+      shape.changeValue(store, value);
     },
     [shape, store],
   );
@@ -77,4 +72,5 @@ const useStore = <Value,>(store: Store<Value>): [Value, Dispatch<Value>] => {
   return [value, dispatch];
 };
 
+export type { EventState };
 export { Provider, useCall, useChange, useEvent, useStore };
