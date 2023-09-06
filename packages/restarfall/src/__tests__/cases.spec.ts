@@ -1,7 +1,8 @@
-import { createComponent } from "../component";
+import { ComponentElement, createComponent } from "../component";
 import { createEvent } from "../event";
 import { useDepend } from "../hooks";
 import { createShape } from "../shape";
+import { createStore } from "../store";
 
 test("2 children", () => {
   const event = createEvent<string>();
@@ -152,4 +153,37 @@ test("order listener by two attach", () => {
     "child2",
     { called: true, payload: "event1" },
   ]);
+});
+
+const componentFn = (
+  callback: () => ComponentElement | ComponentElement[] | null,
+) => {
+  const body = jest.fn(callback);
+  const component = createComponent(body);
+  return { body, component };
+};
+
+test("unlink / link chilren", () => {
+  const $store1 = createStore<string>("");
+  const $store2 = createStore<string>("");
+  const child1 = componentFn(() => {
+    useDepend($store1);
+    useDepend($store2);
+    return null;
+  });
+  const child2 = componentFn(() => null);
+  const root = createComponent(() => {
+    useDepend($store1);
+    return [child1.component(), child2.component()];
+  });
+  const shape = createShape();
+
+  shape.attach(root());
+  shape.setValue($store1, "test");
+  shape.callEvent($store1.changed, "test");
+  shape.setValue($store2, "test");
+  shape.callEvent($store2.changed, "test");
+
+  expect(child1.body.mock.calls).toHaveLength(3);
+  expect(child2.body.mock.calls).toHaveLength(2);
 });

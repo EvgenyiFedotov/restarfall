@@ -14,6 +14,9 @@ describe("create", () => {
     expect(shape.hasValue).toBeInstanceOf(Function);
     expect(shape.getValue).toBeInstanceOf(Function);
     expect(shape.setValue).toBeInstanceOf(Function);
+    expect(shape.getEventState).toBeInstanceOf(Function);
+    expect(shape.listenEvent).toBeInstanceOf(Function);
+    expect(shape.unlistenEvent).toBeInstanceOf(Function);
     expect(shape.callEvent).toBeInstanceOf(Function);
     expect(shape.attach).toBeInstanceOf(Function);
   });
@@ -52,11 +55,13 @@ describe("events", () => {
     expect(shape.listenEvent(event, listener)).toBeInstanceOf(Function);
     expect(shape.listenEvent(event, unlistener)).toBeInstanceOf(Function);
     expect(shape.unlistenEvent(event, unlistener)).toBe(undefined);
+    expect(shape.getEventState(event)).toEqual({});
   });
 
   test("after call", () => {
     expect(shape.callEvent(event, "test1")).toBe(undefined);
     expect(shape.callEvent(event, "test2")).toBe(undefined);
+    expect(shape.getEventState(event)).toEqual({ payload: "test2" });
     expect(listener.mock.calls).toHaveLength(2);
     expect(listener.mock.calls[0]).toEqual(["test1", {}]);
     expect(listener.mock.calls[1]).toEqual(["test2", { payload: "test1" }]);
