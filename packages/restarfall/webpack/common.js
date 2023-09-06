@@ -36,13 +36,12 @@ const cjs = {
     libraryTarget: "commonjs2",
     path: path.resolve(process.cwd(), "./dist/cjs"),
     filename: "./[name].js",
-    clean: true,
   },
 };
 
 const mjs = {
   experiments: {
-    // outputModule: true,
+    outputModule: true,
   },
   entry: {
     index: path.resolve(process.cwd(), "./src/index.ts"),
@@ -50,8 +49,7 @@ const mjs = {
   output: {
     path: path.resolve(process.cwd(), "./dist/mjs"),
     filename: "./[name].js",
-    clean: true,
-    // module: true,
+    library: { type: "module" },
   },
 };
 

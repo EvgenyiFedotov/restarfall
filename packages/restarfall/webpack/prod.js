@@ -1,6 +1,6 @@
 const { common, cjs, mjs } = require("./common");
 
-common.mode = "development";
+common.mode = "production";
 
 module.exports = [
   { ...common, ...cjs },
