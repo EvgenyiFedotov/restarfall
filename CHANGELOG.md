@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.1.8](https://github.com/EvgenyiFedotov/restarfall/compare/v0.1.7...v0.1.8) (2023-09-06)
+
+
+### Features
+
+* add changeValue method for shape ([b4046fc](https://github.com/EvgenyiFedotov/restarfall/commit/b4046fcf59f5542ae8feb9857d5b70be4f991a5f))
+* add restarfall-react base approach ([874b4b7](https://github.com/EvgenyiFedotov/restarfall/commit/874b4b7604d655c92b3adccf217e0590644ac12d))
+* move getEventState to public methods of shape ([d17f5d7](https://github.com/EvgenyiFedotov/restarfall/commit/d17f5d74914638286106130c1d4fcd2a95d16781))
+
+
+### Bug Fixes
+
+* change type for filter of depend ([7838d25](https://github.com/EvgenyiFedotov/restarfall/commit/7838d250a9df4a9821b9fbd8028b11b3a158edaf))
+
 ### [0.1.7](https://github.com/EvgenyiFedotov/restarfall/compare/v0.1.6...v0.1.7) (2023-09-05)
 
 ### [0.1.6](https://github.com/EvgenyiFedotov/restarfall/compare/v0.1.5...v0.1.6) (2023-09-05)
