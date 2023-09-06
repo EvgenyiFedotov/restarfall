@@ -23,15 +23,15 @@ jobs:
           node-version: "16.x"
           registry-url: "https://registry.npmjs.org"
           cache: "npm"
-      - name: install root
+      - name: Install root
         run: npm ci
-      - name: test & build
+      - name: Test & build
         working-directory: ./packages/restarfall
         run: |
           npm ci
           npm run test
           npm run build
-      - name: publish
+      - name: Publish
         working-directory: ./packages/restarfall
         run: npm publish
         env:
@@ -46,15 +46,20 @@ jobs:
           node-version: "16.x"
           registry-url: "https://registry.npmjs.org"
           cache: "npm"
-      - name: install root
+      - name: Install root
         run: npm ci
-      - name: test & build
+      - name: Install & build restarfall
+        working-directory: ./packages/restarfall
+        run: |
+          npm ci
+          npm run build
+      - name: Test & build
         working-directory: ./packages/restarfall-react
         run: |
           npm ci
           npm run test
           npm run build
-      - name: publish
+      - name: Publish
         working-directory: ./packages/restarfall-react
         run: npm publish
         env:
