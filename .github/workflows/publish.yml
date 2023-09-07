@@ -25,7 +25,6 @@ jobs:
       - name: Install root
         run: |
           npm ci
-          npm run update-depends
       - name: Test & build
         working-directory: ./packages/restarfall
         run: |
@@ -64,6 +63,8 @@ jobs:
           npm run build
       - name: Publish
         working-directory: ./packages/restarfall-react
-        run: npm publish
+        run: |
+          npm run update-depends
+          npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
