@@ -39,7 +39,10 @@ test("setRawData", () => {
 test("serialize", () => {
   const shape = create.shape();
   const $count = create.store<number>(-1);
-  const component = create.component(() => null, {
+  const child = create.component(() => null, {
+    serialize: (getValue) => ({ count_child: getValue($count) }),
+  });
+  const component = create.component(() => child(), {
     serialize: (getValue) => ({ count: getValue($count) }),
   });
 
@@ -48,9 +51,9 @@ test("serialize", () => {
 
   console.log(shape.serialize());
 
-  // -> { count: 2 }
+  // -> { count: 2, count_child: 2 }
 
-  expect(log.mock.calls).toEqual([[{ count: 2 }]]);
+  expect(log.mock.calls).toEqual([[{ count: 2, count_child: 2 }]]);
 });
 
 test("getValue / hasValue before change", () => {
@@ -85,6 +88,7 @@ test("changeValue", () => {
   const shape = create.shape();
   const $count = create.store<number>(0);
 
+  shape.changeValue($count, 2);
   shape.changeValue($count, 2);
 
   console.log(shape.hasValue($count));
@@ -186,6 +190,20 @@ test("attach", () => {
   // -> right
 
   expect(log.mock.calls).toEqual([["left"], ["right"]]);
+});
+
+test("attach incorrect element", () => {
+  const shape = create.shape();
+
+  try {
+    shape.attach({ type: "component-element", key: "", index: 1 });
+  } catch {
+    console.log("error");
+  }
+
+  // -> error
+
+  expect(log.mock.calls).toEqual([["error"]]);
 });
 
 test("wait", async () => {

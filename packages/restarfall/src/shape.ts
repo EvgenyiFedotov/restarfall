@@ -155,7 +155,7 @@ const createShape = (parent?: Shape): Shape => {
   const changeValue: ShapeChangeValue = (store, value) => {
     const prevValue = getValue(store);
 
-    if (prevValue === value) return shape;
+    if (prevValue === value) return;
 
     setValue(store, value);
     callEvent(store.changed, value);

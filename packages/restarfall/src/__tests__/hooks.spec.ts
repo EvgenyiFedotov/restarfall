@@ -156,16 +156,21 @@ test("useTake", async () => {
 test("usePromise", async () => {
   const request = () =>
     new Promise<number>((resolve) => setTimeout(() => resolve(2), 200));
-  const counter = create.component(() => {
+  const update = create.component(() => {
     use.promise(request()).then(console.log);
     return null;
+  });
+  const counter = create.component(() => {
+    use.promise(request()).then(console.log);
+    return update();
   });
   const shape = create.shape();
 
   shape.attach(counter());
 
   // -> 2
+  // -> 2
 
   await shape.wait();
-  expect(log.mock.calls).toEqual([[2]]);
+  expect(log.mock.calls).toEqual([[2], [2]]);
 });
