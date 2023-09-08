@@ -1,17 +1,27 @@
-import { createStore } from "../store";
+/* eslint-disable no-console */
+import { createStore } from "../index";
+
+const log = jest.fn();
+global.console = { ...console, log };
+beforeEach(() => log.mockClear());
 
 test("default", () => {
-  const $store = createStore<string>("def");
+  const $count = createStore<number>(-1, { key: "count" });
 
-  expect($store.type).toBe("store");
-  expect($store.key).toBe(null);
-  expect($store.initialValue).toBe("def");
-  expect($store.changed.type).toBe("event");
-});
+  console.log($count.type);
+  console.log($count.key);
+  console.log($count.initialValue);
+  console.log($count.changed.key);
 
-test("with options", () => {
-  const $store = createStore<string>("def", { key: "field" });
+  // -> "store"
+  // -> "count"
+  // -> -1
+  // -> count_changed
 
-  expect($store.key).toBe("field");
-  expect($store.changed.key).toBe("field_changed");
+  expect(log.mock.calls).toEqual([
+    ["store"],
+    ["count"],
+    [-1],
+    ["count_changed"],
+  ]);
 });

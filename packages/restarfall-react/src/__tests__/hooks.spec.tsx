@@ -6,7 +6,9 @@ import { Provider, useEvent, useStore } from "../hooks";
 
 const $store = create.store<string>("");
 const event = create.event<string>();
-const shape = create.shape().setValue($store, "VALUE");
+const shape = create.shape();
+
+shape.setValue($store, "VALUE");
 
 test("value from store", () => {
   const Component = () => {

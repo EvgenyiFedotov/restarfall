@@ -1,5 +1,4 @@
 import {
-  ComponentApi,
   ComponentElement,
   ComponentInstance,
   DependFilter,
@@ -8,317 +7,329 @@ import {
 import { Event } from "./event";
 import { Store } from "./store";
 
-interface ShapeState {
-  // Data
-  rawData: Record<string, unknown>;
+// State [Data]
+type ShapeRawData = Record<string, unknown>;
 
-  // Values
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  values: Map<Store<unknown>, any>;
+// State [Values]
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type ShapeValues = Map<Store<unknown>, any>;
 
-  // Events
-  depends: Map<
-    ComponentInstance,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    Set<{ event: Event<unknown>; listener: EventListener<any> }>
-  >;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  listeners: Map<EventListener<any>, ComponentInstance>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  events: Map<Event<unknown>, Set<EventListener<any>>>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  payloads: Map<Event<unknown>, any>;
-  calledEvent: Event<unknown> | null;
-
-  // Components
-  componentApi: ComponentApi | null;
-  roots: ComponentInstance[];
-}
-
+// State[Events]
 type EventListener<Value> = (value: Value, state: { payload?: Value }) => void;
+type ShapeDepends = Map<
+  ComponentInstance,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  Set<{ event: Event<unknown>; listener: EventListener<any> }>
+>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type ShapeListeners = Map<EventListener<any>, ComponentInstance>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type ShapeEvents = Map<Event<unknown>, Set<EventListener<any>>>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type ShapePayloads = Map<Event<unknown>, any>;
+type ShapeCalledEvent = Event<unknown> | null;
 
-interface ShapePrivate {
-  // Data
-  getRawValue: (key: string) => { value?: unknown };
-  deleteRawValue: (key: string) => void;
+// State[Components]
+type ShapeRoots = ComponentInstance[];
 
-  // Events
-  linkInstance: <Value>(
-    instance: ComponentInstance,
-    event: Event<Value>,
-    listener: EventListener<Value>,
-  ) => void;
-  unlinkInstance: (instance: ComponentInstance) => void;
-  isCalledEvent: <Value>(event: Event<Value>) => boolean;
-}
+// Methods [Data]
+type ShapeGetRawValue = (key: string) => { value?: unknown };
+type ShapeDeleteRawValue = (key: string) => void;
+type ShapeSetRawData = (rawData: object) => void;
+type ShapeSerialize = () => object;
 
-type CallEvent = {
+// Methods [Values]
+type ShapeHasValue = <Value>(store: Store<Value>) => boolean;
+type ShapeGetValue = <Value>(store: Store<Value>) => Value;
+type ShapeSetValue = <Value>(store: Store<Value>, value: Value) => void;
+type ShapeChangeValue = <Value>(store: Store<Value>, value: Value) => void;
+
+// Methods [Events]
+type ShapeLinkInstance = <Value>(
+  instance: ComponentInstance,
+  event: Event<Value>,
+  listener: EventListener<Value>,
+) => void;
+type ShapeUnlinkInstance = (instance: ComponentInstance) => void;
+type ShapeIsCalledEvent = <Value>(event: Event<Value>) => boolean;
+type ShapeGetEventState = <Value>(event: Event<Value>) => { payload?: Value };
+type ShapeUnlistenEvent = <Value>(
+  event: Event<Value>,
+  listener: EventListener<Value>,
+) => void;
+type ShapeListenEvent = <Value>(
+  event: Event<Value>,
+  listener: EventListener<Value>,
+) => () => void;
+interface ShapeCallEvent {
   <Value>(event: Event<Value>, value: Value): void;
   (event: Event<void>): void;
-};
+}
+
+// Methods [Components]
+type ShapeAttach = (element: ComponentElement) => void;
+type ShapeWait = () => Promise<void>;
+
+// Shape
+interface ShapeState {
+  // State [Values]
+  values: ShapeValues;
+}
 
 interface Shape {
   type: "shape";
 
-  // Data
-  setRawData: (rawData: object) => Shape;
-  serialize: () => object;
+  // Methods [Data]
+  setRawData: ShapeSetRawData;
+  serialize: ShapeSerialize;
 
-  // Values
-  hasValue: <Value>(store: Store<Value>) => boolean;
-  getValue: <Value>(store: Store<Value>) => Value;
-  setValue: <Value>(store: Store<Value>, value: Value) => Shape;
-  changeValue: <Value>(store: Store<Value>, value: Value) => Shape;
+  // Methods [Values]
+  hasValue: ShapeHasValue;
+  getValue: ShapeGetValue;
+  setValue: ShapeSetValue;
+  changeValue: ShapeChangeValue;
 
-  // Events
-  getEventState: <Value>(event: Event<Value>) => { payload?: Value };
-  listenEvent: <Value>(
-    event: Event<Value>,
-    listener: EventListener<Value>,
-  ) => () => void;
-  unlistenEvent: <Value>(
-    event: Event<Value>,
-    listener: EventListener<Value>,
-  ) => void;
-  callEvent: CallEvent;
+  // Methods [Events]
+  getEventState: ShapeGetEventState;
+  unlistenEvent: ShapeUnlistenEvent;
+  listenEvent: ShapeListenEvent;
+  callEvent: ShapeCallEvent;
 
-  // Components
-  attach: (element: ComponentElement) => { wait: () => Promise<void> };
+  // Methods [Components]
+  attach: ShapeAttach;
+  wait: ShapeWait;
 }
 
-const shapes: WeakMap<Shape, { values: ShapeState["values"] }> = new WeakMap();
+const shapes: WeakMap<Shape, ShapeState> = new WeakMap();
 
 const createShape = (parent?: Shape): Shape => {
   const parentState = parent ? shapes.get(parent) : null;
 
-  const state: ShapeState = {
-    // Data
-    rawData: {},
+  // State
+  const rawData: ShapeRawData = {};
+  const values: ShapeValues = new Map(parentState ? parentState.values : null);
+  const depends: ShapeDepends = new Map();
+  const listeners: ShapeListeners = new Map();
+  const events: ShapeEvents = new Map();
+  const payloads: ShapePayloads = new Map();
+  let calledEvent: ShapeCalledEvent = null;
+  const roots: ShapeRoots = [];
 
-    // Values
-    values: new Map(parentState ? parentState.values : null),
-
-    // Events
-    depends: new Map(),
-    listeners: new Map(),
-    events: new Map(),
-    payloads: new Map(),
-    calledEvent: null,
-
-    // Components
-    componentApi: null,
-    roots: [],
+  // Methods
+  const getRawValue: ShapeGetRawValue = (key) => {
+    return key in rawData ? { value: rawData[key] } : {};
   };
+  const deleteRawValue: ShapeDeleteRawValue = (key) => {
+    delete rawData[key];
+  };
+  const setRawData: ShapeSetRawData = (addedRawData) => {
+    Object.assign(rawData, addedRawData);
+  };
+  const serialize: ShapeSerialize = () => {
+    const data: object = {};
 
-  const privateApi: ShapePrivate = {
-    // Data
-    getRawValue: (key) => {
-      return key in state.rawData ? { value: state.rawData[key] } : {};
-    },
-    deleteRawValue: (key) => {
-      delete state.rawData[key];
-    },
-
-    // Events
-    linkInstance: (instance, event, listener) => {
-      const instanceDepends = state.depends.get(instance) ?? new Set();
-
-      instanceDepends.add({ event, listener });
-      state.depends.set(instance, instanceDepends);
-      state.listeners.set(listener, instance);
-      shape.listenEvent(event, listener);
-    },
-    unlinkInstance: (instance) => {
-      state.depends.get(instance)?.forEach(({ event, listener }) => {
-        state.listeners.delete(listener);
-        shape.unlistenEvent(event, listener);
+    roots.forEach((instance) => {
+      Object.assign(
+        data,
+        elements.get(instance.element)?.serialize?.(getValue) ?? {},
+      );
+      instance.allChidlren.forEach((childInstance) => {
+        Object.assign(
+          data,
+          elements.get(childInstance.element)?.serialize?.(getValue) ?? {},
+        );
       });
-      state.depends.delete(instance);
-    },
-    isCalledEvent: (event) => {
-      return state.calledEvent === event;
-    },
+    });
+
+    return data;
+  };
+  const hasValue: ShapeHasValue = (store) => {
+    return values.has(store);
+  };
+  const getValue: ShapeGetValue = (store) => {
+    return values.has(store) ? values.get(store) : store.initialValue;
+  };
+  const setValue: ShapeSetValue = (store, value) => {
+    values.set(store, value);
+  };
+  const changeValue: ShapeChangeValue = (store, value) => {
+    const prevValue = getValue(store);
+
+    if (prevValue === value) return shape;
+
+    setValue(store, value);
+    callEvent(store.changed, value);
+  };
+  const linkInstance: ShapeLinkInstance = (instance, event, listener) => {
+    const instanceDepends = depends.get(instance) ?? new Set();
+
+    instanceDepends.add({ event, listener });
+    depends.set(instance, instanceDepends);
+    listeners.set(listener, instance);
+    listenEvent(event, listener);
+  };
+  const unlinkInstance: ShapeUnlinkInstance = (instance) => {
+    depends.get(instance)?.forEach(({ event, listener }) => {
+      listeners.delete(listener);
+      unlistenEvent(event, listener);
+    });
+    depends.delete(instance);
+  };
+  const isCalledEvent: ShapeIsCalledEvent = (event) => {
+    return calledEvent === event;
+  };
+  const getEventState: ShapeGetEventState = (event) => {
+    return payloads.has(event) ? { payload: payloads.get(event) } : {};
+  };
+  const unlistenEvent: ShapeUnlistenEvent = (event, listener) => {
+    events.get(event)?.delete(listener);
+  };
+  const listenEvent: ShapeListenEvent = (event, listener) => {
+    const eventListeners = events.get(event) ?? new Set();
+
+    eventListeners.add(listener);
+    events.set(event, eventListeners);
+
+    return () => {
+      unlistenEvent(event, listener);
+    };
+  };
+  const callEvent: ShapeCallEvent = ((event, value) => {
+    const prev = getEventState(event);
+    const prevCalledEvent = calledEvent;
+
+    calledEvent = event;
+    payloads.set(event, value);
+
+    const instances = roots.flatMap((instance) =>
+      [instance].concat(instance.allChidlren),
+    ); // TODO Potential place for optimization
+    const dependListeners: EventListener<unknown>[] = [];
+    const outsideListeners: EventListener<unknown>[] = [];
+
+    Array.from(events.get(event) ?? []).forEach((listener) => {
+      const instance = listeners.get(listener);
+
+      if (instance) {
+        dependListeners[instances.indexOf(instance)] = listener;
+      } else {
+        outsideListeners.push(listener);
+      }
+    });
+
+    for (const listener of dependListeners) {
+      if (events.get(event)?.has(listener)) listener(value, prev);
+    }
+
+    for (const listener of outsideListeners) {
+      if (events.get(event)?.has(listener)) listener(value, prev);
+    }
+
+    calledEvent = prevCalledEvent;
+  }) as ShapeCallEvent;
+  const attach: ShapeAttach = (element) => {
+    const methods = elements.get(element);
+
+    if (!methods) throw new Error("Incorrect element for attach to shape.");
+
+    const rootInstance = methods.attach({
+      getRawValue,
+      deleteRawValue,
+      getValue,
+      setValue,
+      changeValue,
+      getEventState,
+      isCalledEvent,
+      callEvent,
+    });
+
+    roots.push(rootInstance);
+
+    const createListen =
+      (instance: ComponentInstance) =>
+      <Value>(filter: DependFilter<Value>, event: Event<Value>): void => {
+        const listener: EventListener<Value> = (value, prev) => {
+          // filter
+          // if (!componentApi) return;
+          if (filter === false) return;
+          if (filter && filter(value, prev) === false) return;
+
+          // unlink
+          unlinkInstance(instance);
+          instance.allChidlren.forEach((childInstance) => {
+            unlinkInstance(childInstance);
+          });
+
+          // reattach
+          elements.get(instance.element)?.reattach(instance, {
+            getRawValue,
+            deleteRawValue,
+            getValue,
+            setValue,
+            changeValue,
+            getEventState,
+            isCalledEvent,
+            callEvent,
+          });
+
+          // link
+          instance.depends.forEach(createListen(instance));
+          instance.allChidlren.forEach((childInstance) => {
+            childInstance.depends.forEach(createListen(childInstance));
+          });
+        };
+
+        linkInstance(instance, event, listener);
+      };
+
+    // link
+    rootInstance.depends.forEach(createListen(rootInstance));
+    rootInstance.allChidlren.forEach((childInstance) => {
+      childInstance.depends.forEach(createListen(childInstance));
+    });
+  };
+  const wait: ShapeWait = async () => {
+    await Promise.allSettled(
+      roots.flatMap((rootInstance) => [
+        ...Array.from(rootInstance.promises),
+        ...rootInstance.allChidlren.flatMap((child) =>
+          Array.from(child.promises).flat(),
+        ),
+      ]),
+    );
   };
 
+  // Shape
   const shape: Shape = {
     type: "shape",
 
-    // Data
-    setRawData: (rawData) => {
-      Object.assign(state.rawData, rawData);
-      return shape;
-    },
-    serialize: () => {
-      const data: object = {};
+    // Methods [Data]
+    setRawData,
+    serialize,
 
-      state.roots.forEach((instance) => {
-        Object.assign(
-          data,
-          elements.get(instance.element)?.serialize?.(shape.getValue) ?? {},
-        );
+    // Methods [Values]
+    hasValue,
+    getValue,
+    setValue,
+    changeValue,
 
-        instance.allChidlren.forEach((childInstance) => {
-          Object.assign(
-            data,
-            elements.get(childInstance.element)?.serialize?.(shape.getValue) ??
-              {},
-          );
-        });
-      });
+    // Methods [Events]
+    getEventState,
+    unlistenEvent,
+    listenEvent,
+    callEvent,
 
-      return data;
-    },
-
-    // Values
-    hasValue: (store) => {
-      return state.values.has(store);
-    },
-    getValue: (store) => {
-      return state.values.has(store)
-        ? state.values.get(store)
-        : store.initialValue;
-    },
-    setValue: (store, value) => {
-      state.values.set(store, value);
-
-      return shape;
-    },
-    changeValue: (store, value) => {
-      const prevValue = shape.getValue(store);
-
-      if (prevValue === value) return shape;
-
-      shape.setValue(store, value);
-      shape.callEvent(store.changed, value);
-
-      return shape;
-    },
-
-    // Events
-    getEventState: (event) => {
-      return state.payloads.has(event)
-        ? { payload: state.payloads.get(event) }
-        : {};
-    },
-    listenEvent: (event, listener) => {
-      const eventListeners = state.events.get(event) ?? new Set();
-
-      eventListeners.add(listener);
-      state.events.set(event, eventListeners);
-
-      return () => {
-        shape.unlistenEvent(event, listener);
-      };
-    },
-    unlistenEvent: (event, listener) => {
-      state.events.get(event)?.delete(listener);
-    },
-    callEvent: ((event, value) => {
-      const prev = shape.getEventState(event);
-      const prevCalledEvent = state.calledEvent;
-
-      state.calledEvent = event;
-      state.payloads.set(event, value);
-
-      const instances = state.roots.flatMap((instance) =>
-        [instance].concat(instance.allChidlren),
-      ); // TODO Potential place for optimization
-      const dependListeners: EventListener<unknown>[] = [];
-      const outsideListeners: EventListener<unknown>[] = [];
-
-      Array.from(state.events.get(event) ?? []).forEach((listener) => {
-        const instance = state.listeners.get(listener);
-
-        if (instance) {
-          dependListeners[instances.indexOf(instance)] = listener;
-        } else {
-          outsideListeners.push(listener);
-        }
-      });
-
-      for (const listener of dependListeners) {
-        if (state.events.get(event)?.has(listener)) listener(value, prev);
-      }
-
-      for (const listener of outsideListeners) {
-        if (state.events.get(event)?.has(listener)) listener(value, prev);
-      }
-
-      state.calledEvent = prevCalledEvent;
-    }) as CallEvent,
-
-    // Components
-    attach: (element) => {
-      const methods = elements.get(element);
-
-      if (!methods) throw new Error("Incorrect element for attach to shape.");
-
-      state.componentApi = state.componentApi ?? {
-        getRawValue: privateApi.getRawValue,
-        deleteRawValue: privateApi.deleteRawValue,
-        getValue: shape.getValue,
-        setValue: shape.setValue,
-        changeValue: shape.changeValue,
-        getEventState: shape.getEventState,
-        isCalledEvent: privateApi.isCalledEvent,
-        callEvent: shape.callEvent,
-      };
-
-      const componentApi = state.componentApi;
-      const rootInstance = methods.attach(state.componentApi);
-
-      state.roots.push(rootInstance);
-
-      const createListen =
-        (instance: ComponentInstance) =>
-        <Value>(filter: DependFilter<Value>, event: Event<Value>): void => {
-          const listener: EventListener<Value> = (value, prev) => {
-            // filter
-            if (filter === false) return;
-            if (filter && filter(value, prev) === false) return;
-
-            // unlink
-            privateApi.unlinkInstance(instance);
-            instance.allChidlren.forEach((childInstance) => {
-              privateApi.unlinkInstance(childInstance);
-            });
-
-            // reattach
-            elements.get(instance.element)?.reattach(instance, componentApi);
-
-            // link
-            instance.depends.forEach(createListen(instance));
-            instance.allChidlren.forEach((childInstance) => {
-              childInstance.depends.forEach(createListen(childInstance));
-            });
-          };
-
-          privateApi.linkInstance(instance, event, listener);
-        };
-
-      // link
-      rootInstance.depends.forEach(createListen(rootInstance));
-      rootInstance.allChidlren.forEach((childInstance) => {
-        childInstance.depends.forEach(createListen(childInstance));
-      });
-
-      return {
-        wait: async () => {
-          await Promise.allSettled([
-            ...Array.from(rootInstance.promises),
-            ...rootInstance.allChidlren.flatMap((child) =>
-              Array.from(child.promises).flat(),
-            ),
-          ]);
-        },
-      };
-    },
+    // Methods [Components]
+    attach,
+    wait,
   };
 
-  shapes.set(shape, { values: state.values });
+  shapes.set(shape, {
+    values,
+  });
 
   return shape;
 };
 
-export type { Shape };
-export { createShape };
+export type { EventListener, Shape, ShapeState };
+export { shapes, createShape };

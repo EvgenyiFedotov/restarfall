@@ -1,187 +1,210 @@
-import { ComponentElement, createComponent } from "../component";
-import { createEvent } from "../event";
-import { useDepend } from "../hooks";
-import { createShape } from "../shape";
-import { createStore } from "../store";
+/* eslint-disable no-console */
+import { create, use } from "../index";
 
-test("2 children", () => {
-  const event = createEvent<string>();
-  const check = jest.fn();
-  const child1 = createComponent(() => {
-    check("child1", useDepend(event));
+const log = jest.fn();
+global.console = { ...console, log };
+beforeEach(() => log.mockClear());
+
+test("example for usage", () => {
+  const $count = create.store<number>(0);
+  const inc = create.event<void>();
+  const dec = create.event<void>();
+
+  const counter = create.component(() => {
+    const incEvent = use.depend(inc);
+    const decEvent = use.depend(dec);
+    const count = use.value($count);
+    const setCount = use.dispatch($count);
+    if (incEvent.called) setCount(count + 1);
+    else if (decEvent.called) setCount(count - 1);
     return null;
   });
-  const child2 = createComponent(() => {
-    check("child2", useDepend(event));
-    return null;
-  });
-  const root = createComponent(() => [child1(), child2()]);
-  const shape = createShape();
 
-  shape.attach(root());
-  shape.callEvent(event, "test");
+  const shape = create.shape();
 
-  expect(check.mock.calls).toHaveLength(4);
-  expect(check.mock.calls[0]).toEqual(["child1", { called: false }]);
-  expect(check.mock.calls[1]).toEqual(["child2", { called: false }]);
-  expect(check.mock.calls[2]).toEqual([
-    "child1",
-    { called: true, payload: "test" },
-  ]);
-  expect(check.mock.calls[3]).toEqual([
-    "child2",
-    { called: true, payload: "test" },
-  ]);
-});
+  shape.listenEvent($count.changed, console.log);
+  shape.attach(counter());
+  shape.callEvent(inc);
+  shape.callEvent(dec);
 
-test("last child", () => {
-  const event1 = createEvent<string>();
-  const event2 = createEvent<string>();
-  const check = jest.fn();
-  const child1 = createComponent(() => {
-    check("child1", useDepend(event1));
-    return null;
-  });
-  const child2 = createComponent(() => {
-    check("child2", useDepend(event2));
-    return null;
-  });
-  const root = createComponent(() => [child1(), child2()]);
-  const shape = createShape();
+  // -> 1 {}
+  // -> 0 { payload: 1 }
 
-  shape.attach(root());
-  shape.callEvent(event2, "test");
-
-  expect(check.mock.calls).toHaveLength(3);
-  expect(check.mock.calls[0]).toEqual(["child1", { called: false }]);
-  expect(check.mock.calls[1]).toEqual(["child2", { called: false }]);
-  expect(check.mock.calls[2]).toEqual([
-    "child2",
-    { called: true, payload: "test" },
+  expect(log.mock.calls).toEqual([
+    [1, {}],
+    [0, { payload: 1 }],
   ]);
 });
 
-test("4 children on 2 level", () => {
-  const event1 = createEvent<string>();
-  const event2 = createEvent<void>();
-  const check = jest.fn();
-  const child11 = createComponent(() => {
-    check("child11", useDepend(event1, false));
+test("component with args", () => {
+  const counter = create.component((value: number, coef: number) => {
+    console.log(value * coef);
     return null;
   });
-  const child12 = createComponent(() => {
-    check("child12", useDepend(event1));
-    return null;
-  });
-  const child21 = createComponent(() => {
-    check("child21", useDepend(event1));
-    return null;
-  });
-  const child22 = createComponent(() => {
-    check("child22", useDepend(event2));
-    return null;
-  });
-  const child1 = createComponent(() => [child11(), child12()]);
-  const child2 = createComponent(() => [child21(), child22()]);
-  const root = createComponent(() => [child1(), child2()]);
-  const shape = createShape();
+  const shape = create.shape();
 
-  shape.attach(root());
-  shape.callEvent(event2, undefined);
-  shape.callEvent(event1, "test");
+  shape.attach(counter(10, -1));
 
-  expect(check.mock.calls).toHaveLength(7);
-  expect(check.mock.calls[0]).toEqual(["child11", { called: false }]);
-  expect(check.mock.calls[1]).toEqual(["child12", { called: false }]);
-  expect(check.mock.calls[2]).toEqual(["child21", { called: false }]);
-  expect(check.mock.calls[3]).toEqual(["child22", { called: false }]);
-  expect(check.mock.calls[4]).toEqual([
-    "child22",
-    { called: true, payload: undefined },
+  // -> -10
+
+  expect(log.mock.calls).toEqual([[-10]]);
+});
+
+test("component with children", () => {
+  const update = create.component((value: number, coef: number) => {
+    console.log(value * coef);
+    return null;
+  });
+  const counter = create.component((single: boolean) =>
+    single ? update(10, 1) : [update(20, 0), update(20, -20)],
+  );
+  const shape = create.shape();
+
+  shape.attach(counter(true));
+  shape.attach(counter(false));
+
+  // -> 10
+  // -> 0
+  // -> -400
+
+  expect(log.mock.calls).toEqual([[10], [0], [-400]]);
+});
+
+test("update only chidlren", () => {
+  const trigger = create.event<void>();
+  const update = create.component((isDepend: boolean, index: number) => {
+    if (isDepend) use.depend(trigger);
+    console.log("update", index);
+    return null;
+  });
+  const counter = create.component(() => [
+    update(true, 0),
+    update(false, 1),
+    update(true, 2),
   ]);
-  expect(check.mock.calls[5]).toEqual([
-    "child12",
-    { called: true, payload: "test" },
-  ]);
-  expect(check.mock.calls[6]).toEqual([
-    "child21",
-    { called: true, payload: "test" },
+  const shape = create.shape();
+
+  shape.attach(counter());
+  shape.callEvent(trigger);
+  shape.callEvent(trigger);
+
+  // -> "update" 0
+  // -> "update" 1
+  // -> "update" 2
+  // -> "update" 0
+  // -> "update" 2
+  // -> "update" 0
+  // -> "update" 2
+
+  expect(log.mock.calls).toEqual([
+    ["update", 0],
+    ["update", 1],
+    ["update", 2],
+    ["update", 0],
+    ["update", 2],
+    ["update", 0],
+    ["update", 2],
   ]);
 });
 
-test("order listener by two attach", () => {
-  const event1 = createEvent<string>();
-  const event2 = createEvent<string>();
-  const check = jest.fn();
-  const child1 = createComponent(() => {
-    check("child1", useDepend(event1));
-    check("child1", useDepend(event2));
-    return null;
+test("strict order call children", () => {
+  const reload = create.event<void>();
+  const trigger = create.event<void>();
+  const setValue = create.component(
+    (is: boolean, parentIndex: number, index: number) => {
+      use.depend(reload);
+      if (is) use.depend(trigger);
+      console.log("setValue", parentIndex, index);
+      return null;
+    },
+  );
+  const update = create.component((is: boolean, index: number) => {
+    if (is) use.depend(trigger);
+    console.log("update", index);
+    return [
+      setValue(false, index, 0),
+      setValue(false, index, 1),
+      setValue(true, index, 2),
+    ];
   });
-  const child2 = createComponent(() => {
-    check("child2", useDepend(event1));
-    return null;
+  const counter = create.component(() => {
+    console.log("counter");
+    return [update(true, 0), update(false, 1), update(true, 2)];
   });
-  const shape = createShape();
+  const shape = create.shape();
 
-  shape.attach(child1());
-  shape.attach(child2());
+  shape.attach(counter());
+  shape.callEvent(trigger);
+  shape.callEvent(reload);
 
-  shape.callEvent(event2, "event2");
+  // -> "counter"
+  // -> "udpate" 0
+  // -> "setValue" 0 0
+  // -> "setValue" 0 1
+  // -> "setValue" 0 2
+  // -> "udpate" 1
+  // -> "setValue" 1 0
+  // -> "setValue" 1 1
+  // -> "setValue" 1 2
+  // -> "udpate" 2
+  // -> "setValue" 2 0
+  // -> "setValue" 2 1
+  // -> "setValue" 2 2
 
-  shape.callEvent(event1, "event1");
+  // -> "udpate" 0
+  // -> "setValue" 0 0
+  // -> "setValue" 0 1
+  // -> "setValue" 0 2
+  // -> "setValue" 1 2
+  // -> "udpate" 2
+  // -> "setValue" 2 0
+  // -> "setValue" 2 1
+  // -> "setValue" 2 2
 
-  expect(check.mock.calls[0]).toEqual(["child1", { called: false }]);
-  expect(check.mock.calls[1]).toEqual(["child1", { called: false }]);
-  expect(check.mock.calls[2]).toEqual(["child2", { called: false }]);
+  // -> "setValue" 2 2
+  // -> "setValue" 0 0
+  // -> "setValue" 0 1
+  // -> "setValue" 0 2
+  // -> "setValue" 1 0
+  // -> "setValue" 1 1
+  // -> "setValue" 1 2
+  // -> "setValue" 2 0
+  // -> "setValue" 2 1
+  // -> "setValue" 2 2
 
-  expect(check.mock.calls[3]).toEqual(["child1", { called: false }]);
-  expect(check.mock.calls[4]).toEqual([
-    "child1",
-    { called: true, payload: "event2" },
+  expect(log.mock.calls).toEqual([
+    ["counter"],
+    ["update", 0],
+    ["setValue", 0, 0],
+    ["setValue", 0, 1],
+    ["setValue", 0, 2],
+    ["update", 1],
+    ["setValue", 1, 0],
+    ["setValue", 1, 1],
+    ["setValue", 1, 2],
+    ["update", 2],
+    ["setValue", 2, 0],
+    ["setValue", 2, 1],
+    ["setValue", 2, 2],
+
+    ["update", 0],
+    ["setValue", 0, 0],
+    ["setValue", 0, 1],
+    ["setValue", 0, 2],
+    ["setValue", 1, 2],
+    ["update", 2],
+    ["setValue", 2, 0],
+    ["setValue", 2, 1],
+    ["setValue", 2, 2],
+
+    ["setValue", 0, 0],
+    ["setValue", 0, 1],
+    ["setValue", 0, 2],
+    ["setValue", 1, 0],
+    ["setValue", 1, 1],
+    ["setValue", 1, 2],
+    ["setValue", 2, 0],
+    ["setValue", 2, 1],
+    ["setValue", 2, 2],
   ]);
-
-  expect(check.mock.calls[5]).toEqual([
-    "child1",
-    { called: true, payload: "event1" },
-  ]);
-  expect(check.mock.calls[6]).toEqual([
-    "child1",
-    { called: false, payload: "event2" },
-  ]);
-  expect(check.mock.calls[7]).toEqual([
-    "child2",
-    { called: true, payload: "event1" },
-  ]);
-});
-
-const componentFn = (
-  callback: () => ComponentElement | ComponentElement[] | null,
-) => {
-  const body = jest.fn(callback);
-  const component = createComponent(body);
-  return { body, component };
-};
-
-test("unlink / link chilren", () => {
-  const $store1 = createStore<string>("");
-  const $store2 = createStore<string>("");
-  const child1 = componentFn(() => {
-    useDepend($store1);
-    useDepend($store2);
-    return null;
-  });
-  const child2 = componentFn(() => null);
-  const root = createComponent(() => {
-    useDepend($store1);
-    return [child1.component(), child2.component()];
-  });
-  const shape = createShape();
-
-  shape.attach(root());
-  shape.changeValue($store1, "test");
-  shape.changeValue($store2, "test");
-
-  expect(child1.body.mock.calls).toHaveLength(3);
-  expect(child2.body.mock.calls).toHaveLength(2);
 });

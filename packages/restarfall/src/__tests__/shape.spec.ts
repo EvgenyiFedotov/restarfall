@@ -1,141 +1,200 @@
-import { createComponent } from "../component";
-import { createEvent } from "../event";
-import { createShape } from "../shape";
-import { createStore } from "../store";
+/* eslint-disable no-console */
+import { create } from "../index";
 
-describe("create", () => {
-  test("default", () => {
-    const shape = createShape();
+const log = jest.fn();
+global.console = { ...console, log };
+beforeEach(() => log.mockClear());
 
-    expect(shape.type).toBe("shape");
-    expect(shape.hasValue).toBeInstanceOf(Function);
-    expect(shape.getValue).toBeInstanceOf(Function);
-    expect(shape.setValue).toBeInstanceOf(Function);
-    expect(shape.unlistenEvent).toBeInstanceOf(Function);
-    expect(shape.listenEvent).toBeInstanceOf(Function);
-    expect(shape.callEvent).toBeInstanceOf(Function);
-    expect(shape.attach).toBeInstanceOf(Function);
-    expect(shape.serialize).toBeInstanceOf(Function);
-    expect(shape.setRawData).toBeInstanceOf(Function);
-  });
+test("default", () => {
+  const shape = create.shape();
+
+  console.log(shape.type);
+
+  // -> shape
+
+  expect(log.mock.calls).toEqual([["shape"]]);
 });
 
-describe("values", () => {
-  const shape = createShape();
-  const $name = createStore<string>("bob");
-
-  test("hasValue", () => {
-    expect(shape.hasValue($name)).toBe(false);
+test("setRawData", () => {
+  const shape = create.shape();
+  const $count = create.store<number>(-1);
+  const component = create.component(() => null, {
+    deserialize: (getValue) => ({
+      count: { store: $count, value: getValue("count").value },
+    }),
   });
 
-  test("getValue", () => {
-    expect(shape.getValue($name)).toBe($name.initialValue);
-  });
+  shape.setRawData({ count: 2 });
+  shape.attach(component());
 
-  test("setValue", () => {
-    expect(shape.setValue($name, "test")).toBe(shape);
-    expect(shape.hasValue($name)).toBe(true);
-    expect(shape.getValue($name)).toBe("test");
-  });
+  console.log(shape.hasValue($count));
+  console.log(shape.getValue($count));
 
-  test("values by parent shape", () => {
-    const parentShape = createShape().setValue($name, "simple");
-    const shape = createShape(parentShape);
+  // -> true
+  // -> 2
 
-    parentShape.setValue($name, "test");
-
-    expect(parentShape.getValue($name)).toBe("test");
-    expect(shape.getValue($name)).toBe("simple");
-  });
+  expect(log.mock.calls).toEqual([[true], [2]]);
 });
 
-describe("events", () => {
-  const shape = createShape();
-  const firstListener = jest.fn(() => {});
-  const secondListener = jest.fn(() => {});
-  const send = createEvent<string>();
-
-  test("listenEvent", () => {
-    expect(shape.listenEvent(send, firstListener)).toBeInstanceOf(Function);
+test("serialize", () => {
+  const shape = create.shape();
+  const $count = create.store<number>(-1);
+  const component = create.component(() => null, {
+    serialize: (getValue) => ({ count: getValue($count) }),
   });
 
-  test("unlistenEvent", () => {
-    expect(shape.unlistenEvent(send, firstListener)).toBe(undefined);
-    expect(shape.listenEvent(send, secondListener)()).toBe(undefined);
-  });
+  shape.setValue($count, 2);
+  shape.attach(component());
 
-  test("callEvent", () => {
-    const innerListener = jest.fn((_value: string) => {});
-    const clear = createEvent<void>();
+  console.log(shape.serialize());
 
-    shape.listenEvent(send, innerListener);
-    shape.callEvent(send, "test");
-    shape.callEvent(clear, undefined);
+  // -> { count: 2 }
 
-    expect(firstListener.mock.calls).toHaveLength(0);
-    expect(secondListener.mock.calls).toHaveLength(0);
-    expect(innerListener.mock.calls[0][0]).toBe("test");
-  });
+  expect(log.mock.calls).toEqual([[{ count: 2 }]]);
 });
 
-describe("attach", () => {
-  const shape = createShape();
+test("getValue / hasValue before change", () => {
+  const shape = create.shape();
+  const $count = create.store<number>(-1);
 
-  test("failure element", () => {
-    expect(() =>
-      shape.attach({ type: "component-element", index: 1, key: null }),
-    ).toThrow();
-  });
+  console.log(shape.hasValue($count));
+  console.log(shape.getValue($count));
 
-  test("default", () => {
-    const childBody = jest.fn();
-    const body = jest.fn(() => createComponent(childBody)());
-    const component = createComponent(body);
-    const result = shape.attach(component());
+  // -> false
+  // -> -1
 
-    expect(result.wait).toBeInstanceOf(Function);
-    expect(body.mock.calls).toHaveLength(1);
-    expect(childBody.mock.calls).toHaveLength(1);
-  });
-
-  test("wait", async () => {
-    const childBody = jest.fn();
-    const body = jest.fn(() => createComponent(childBody)());
-    const component = createComponent(body);
-    const result = shape.attach(component());
-
-    expect(() => result.wait()).not.toThrow();
-  });
+  expect(log.mock.calls).toEqual([[false], [-1]]);
 });
 
-describe("serialize", () => {
-  test("default", () => {
-    const $name = createStore<string>("");
-    const childBody = jest.fn();
-    const body = jest.fn(() => createComponent(childBody)());
-    const serialize = jest.fn((getValue) => ({ name: getValue($name) }));
-    const component = createComponent(body, { serialize });
-    const shape = createShape();
+test("setValue / getValue / hasValue", () => {
+  const shape = create.shape();
+  const $count = create.store<number>(0);
 
-    shape.attach(component());
-    shape.setValue($name, "test");
+  shape.setValue($count, 2);
 
-    expect(shape.serialize()).toEqual({ name: "test" });
-    expect(serialize.mock.calls).toHaveLength(1);
+  console.log(shape.hasValue($count));
+  console.log(shape.getValue($count));
+
+  // -> true
+  // -> 2
+
+  expect(log.mock.calls).toEqual([[true], [2]]);
+});
+
+test("changeValue", () => {
+  const shape = create.shape();
+  const $count = create.store<number>(0);
+
+  shape.changeValue($count, 2);
+
+  console.log(shape.hasValue($count));
+  console.log(shape.getValue($count));
+
+  // -> true
+  // -> 2
+
+  expect(log.mock.calls).toEqual([[true], [2]]);
+});
+
+test("with parent shape", () => {
+  const rootShape = create.shape();
+  const $count = create.store<number>(0);
+
+  rootShape.setValue($count, 2);
+
+  const shape = create.shape(rootShape);
+
+  console.log(shape.hasValue($count));
+  console.log(shape.getValue($count));
+
+  // -> true
+  // -> 2
+
+  expect(log.mock.calls).toEqual([[true], [2]]);
+});
+
+test("getEventState before call event", () => {
+  const event = create.event<number>();
+  const shape = create.shape();
+
+  console.log(shape.getEventState(event));
+
+  // -> {}
+
+  expect(log.mock.calls).toEqual([[{}]]);
+});
+
+test("getEventState / listenEvent / unlistenEvent / callEvent", () => {
+  const event = create.event<number>();
+  const shape = create.shape();
+
+  const unlisten = shape.listenEvent(event, () => {
+    console.log("first");
   });
 
-  test("setRawData", () => {
-    const $name = createStore<string>("");
-    const body = jest.fn(() => null);
-    const deserialize = jest.fn((getValue) => ({
-      name: { store: $name, value: getValue("name").value },
-    }));
-    const component = createComponent(body, { deserialize });
-    const shape = createShape();
+  unlisten();
+  shape.listenEvent(event, console.log);
+  shape.callEvent(event, 1);
+  shape.callEvent(event, 2);
 
-    shape.setRawData({ name: "test" });
-    shape.attach(component());
+  console.log(shape.getEventState(event));
 
-    expect(shape.getValue($name)).toBe("test");
+  // -> 1 {}
+  // -> 2 { payload: 1 }
+
+  expect(log.mock.calls).toEqual([
+    [1, {}],
+    [2, { payload: 1 }],
+    [{ payload: 2 }],
+  ]);
+});
+
+test("callEvent void / with arg", () => {
+  const eventVoid = create.event<void>();
+  const eventNum = create.event<number>();
+  const shape = create.shape();
+
+  shape.listenEvent(eventVoid, console.log);
+  shape.listenEvent(eventNum, console.log);
+  shape.callEvent(eventVoid);
+  shape.callEvent(eventNum, 2);
+
+  // -> undefined {}
+  // -> 2 {}
+
+  expect(log.mock.calls).toEqual([
+    [undefined, {}],
+    [2, {}],
+  ]);
+});
+
+test("attach", () => {
+  const left = create.component(() => {
+    console.log("left");
+    return null;
   });
+  const right = create.component(() => {
+    console.log("right");
+    return null;
+  });
+  const shape = create.shape();
+
+  shape.attach(left());
+  shape.attach(right());
+
+  // -> left
+  // -> right
+
+  expect(log.mock.calls).toEqual([["left"], ["right"]]);
+});
+
+test("wait", async () => {
+  const shape = create.shape();
+
+  shape.wait().then(() => console.log("done"));
+
+  // -> done
+
+  await shape.wait();
+  expect(log.mock.calls).toEqual([["done"]]);
 });

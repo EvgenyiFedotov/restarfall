@@ -81,12 +81,4 @@ const usePromise = <Value>(promise: Promise<Value>): Promise<Value> => {
   return promise;
 };
 
-const use = {
-  depend: useDepend,
-  dispatch: useDispatch,
-  value: useValue,
-  take: useTake,
-  promise: usePromise,
-};
-
-export { useDepend, useDispatch, useValue, useTake, usePromise, use };
+export { useDepend, useDispatch, useValue, useTake, usePromise };

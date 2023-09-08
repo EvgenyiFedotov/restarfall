@@ -1,9 +1,18 @@
-import { createEvent } from "../event";
+/* eslint-disable no-console */
+import { createEvent } from "../index";
+
+const log = jest.fn();
+global.console = { ...console, log };
+beforeEach(() => log.mockClear());
 
 test("default", () => {
-  expect(createEvent()).toEqual({ type: "event", key: null });
-});
+  const change = createEvent<string>({ key: "change" });
 
-test("with options", () => {
-  expect(createEvent({ key: "name" })).toEqual({ type: "event", key: "name" });
+  console.log(change.type);
+  console.log(change.key);
+
+  // -> event
+  // -> change
+
+  expect(log.mock.calls).toEqual([["event"], ["change"]]);
 });

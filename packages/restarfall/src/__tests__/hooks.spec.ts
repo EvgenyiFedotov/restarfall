@@ -1,212 +1,171 @@
-import { createComponent } from "../component";
-import { createEvent } from "../event";
-import {
-  useDepend,
-  useDispatch,
-  usePromise,
-  useTake,
-  useValue,
-} from "../hooks";
-import { createShape } from "../shape";
-import { createStore } from "../store";
+/* eslint-disable no-console */
+import { create, use } from "../index";
 
-describe("useDepend", () => {
-  test("outside component", () => {
-    expect(() => useDepend(createEvent())).toThrow();
+const log = jest.fn();
+global.console = { ...console, log };
+beforeEach(() => log.mockClear());
+
+test("useValue", () => {
+  const $count = create.store<number>(-1);
+  const counter = create.component(() => {
+    const count = use.value($count);
+    console.log(count);
+    return null;
   });
+  const shape = create.shape();
 
-  test("event", () => {
-    const send = createEvent();
-    const body = jest.fn(() => {
-      useDepend(send);
-      return null;
-    });
-    const component = createComponent(body);
-    const shape = createShape();
+  shape.attach(counter());
 
-    shape.attach(component());
-    shape.callEvent(send, undefined);
+  // -> -1
 
-    expect(body.mock.calls).toHaveLength(2);
-  });
-
-  test("store", () => {
-    const $store = createStore<string>("");
-    const body = jest.fn(() => {
-      useDepend($store);
-      return [];
-    });
-    const component = createComponent(body);
-    const shape = createShape();
-
-    shape.attach(component());
-    shape.callEvent($store.changed, "test");
-
-    expect(body.mock.calls).toHaveLength(2);
-  });
-
-  test("use filter", () => {
-    const $store = createStore<string>("");
-    const body = jest.fn(() => {
-      useDepend(
-        $store,
-        (value, { payload }) => payload === "test" && value === "run",
-      );
-      return [];
-    });
-    const component = createComponent(body);
-    const shape = createShape();
-
-    shape.attach(component());
-    shape.callEvent($store.changed, "test");
-    shape.callEvent($store.changed, "run");
-
-    expect(body.mock.calls).toHaveLength(2);
-  });
-
-  test("eventState", () => {
-    const $store = createStore<string>("");
-    const event = createEvent<string>();
-    const check = jest.fn();
-    const body = jest.fn(() => {
-      check(useDepend($store));
-      check(useDepend(event));
-      return [];
-    });
-    const component = createComponent(body);
-    const shape = createShape();
-
-    shape.attach(component());
-    shape.callEvent($store.changed, "test");
-    shape.callEvent(event, "run");
-
-    expect(body.mock.calls).toHaveLength(3);
-    expect(check.mock.calls[0][0]).toEqual({ called: false });
-    expect(check.mock.calls[1][0]).toEqual({ called: false });
-    expect(check.mock.calls[2][0]).toEqual({ called: true, payload: "test" });
-    expect(check.mock.calls[3][0]).toEqual({ called: false });
-    expect(check.mock.calls[4][0]).toEqual({ called: false, payload: "test" });
-    expect(check.mock.calls[5][0]).toEqual({ called: true, payload: "run" });
-  });
+  expect(log.mock.calls).toEqual([[-1]]);
 });
 
-describe("useDispatch", () => {
-  test("outside component", () => {
-    expect(() => useDispatch(createEvent())).toThrow();
+test("useValue with bind depend", () => {
+  const $count = create.store<number>(-1);
+  const counter = create.component(() => {
+    const count = use.value($count, true);
+    console.log(count);
+    return null;
   });
+  const shape = create.shape();
 
-  test("event", () => {
-    const event = createEvent<string>();
-    const component = createComponent(() => {
-      const callEvent = useDispatch(event);
-      callEvent("test");
-      callEvent("test");
-      return null;
-    });
-    const shape = createShape();
-    const listener = jest.fn();
+  shape.attach(counter());
+  shape.changeValue($count, 2);
 
-    shape.listenEvent(event, listener);
-    shape.attach(component());
+  // -> -1
 
-    expect(listener.mock.calls).toHaveLength(2);
-  });
-
-  test("store", () => {
-    const $store = createStore<string>("");
-    const component = createComponent(() => {
-      const callEvent = useDispatch($store);
-      callEvent("test");
-      callEvent("test");
-      return null;
-    });
-    const shape = createShape();
-    const listener = jest.fn();
-
-    shape.listenEvent($store.changed, listener);
-    shape.attach(component());
-
-    expect(listener.mock.calls).toHaveLength(1);
-    expect(shape.getValue($store)).toBe("test");
-  });
+  expect(log.mock.calls).toEqual([[-1], [2]]);
 });
 
-describe("useValue", () => {
-  test("outside component", () => {
-    expect(() => useValue(createStore(""))).toThrow();
+test("useDispatch by store", () => {
+  const $count = create.store<number>(-1);
+  const counter = create.component(() => {
+    const setCount = use.dispatch($count);
+    setCount(2);
+    return null;
   });
+  const shape = create.shape();
 
-  test("default", () => {
-    const $store = createStore<string>("def");
-    const check = jest.fn();
-    const component = createComponent(() => {
-      check(useValue($store));
-      return null;
-    });
-    const shape = createShape();
+  shape.attach(counter());
+  console.log(shape.getValue($count));
 
-    shape.attach(component());
+  // -> 2
 
-    expect(check.mock.calls[0][0]).toBe("def");
-  });
-
-  test("use depend", () => {
-    const $store = createStore<string>("def");
-    const check = jest.fn();
-    const component = createComponent(() => {
-      check(useValue($store, true));
-      return null;
-    });
-    const shape = createShape();
-
-    shape.attach(component());
-    shape.setValue($store, "test");
-    shape.callEvent($store.changed, "event-value");
-
-    expect(check.mock.calls[0][0]).toBe("def");
-    expect(check.mock.calls[1][0]).toBe("test");
-  });
+  expect(log.mock.calls).toEqual([[2]]);
 });
 
-describe("useTake", () => {
-  test("outside component", () => {
-    expect(() => useTake(createStore(""))).toThrow();
+test("useDispatch by event", () => {
+  const changeCount = create.event<number>();
+  const counter = create.component(() => {
+    const setCount = use.dispatch(changeCount);
+    setCount(2);
+    return null;
   });
+  const shape = create.shape();
 
-  test("default", () => {
-    const $store = createStore<string>("def");
-    const check = jest.fn();
-    const component = createComponent(() => {
-      check(useTake($store)());
-      return null;
-    });
-    const shape = createShape();
+  shape.attach(counter());
+  console.log(shape.getEventState(changeCount));
 
-    shape.attach(component());
-    expect(check.mock.calls[0][0]).toBe("def");
-  });
+  // -> { payload: 2 }
+
+  expect(log.mock.calls).toEqual([[{ payload: 2 }]]);
 });
 
-describe("usePromise", () => {
-  test("outside component", () => {
-    expect(() =>
-      usePromise(new Promise<void>((resolve) => resolve())),
-    ).toThrow();
+test("useDepend without filter", () => {
+  const changeCount = create.event<number>();
+  const counter = create.component(() => {
+    const changeCountEvent = use.depend(changeCount);
+    console.log(changeCountEvent);
+    return null;
   });
+  const shape = create.shape();
 
-  test("default", async () => {
-    const request = () => {
-      return new Promise<void>((resolve) => setTimeout(resolve, 100));
-    };
-    const handler = jest.fn();
-    const component = createComponent(() => {
-      usePromise(request()).then(handler);
-      return null;
-    });
-    const shape = createShape();
+  shape.attach(counter());
+  shape.callEvent(changeCount, 2);
 
-    await shape.attach(component()).wait();
+  // -> { called: false }
+  // -> { called: true, payload: 2 }
 
-    expect(handler.mock.calls).toHaveLength(1);
+  expect(log.mock.calls).toEqual([
+    [{ called: false }],
+    [{ called: true, payload: 2 }],
+  ]);
+});
+
+test("useDepend with filter", () => {
+  const changeCount = create.event<number>();
+  const counter = create.component(() => {
+    const changeCountEvent = use.depend(
+      changeCount,
+      (value, { payload }) => value > 2 && payload === 2,
+    );
+    console.log(changeCountEvent);
+    return null;
   });
+  const shape = create.shape();
+
+  shape.attach(counter());
+  shape.callEvent(changeCount, 2);
+  shape.callEvent(changeCount, 4);
+  shape.callEvent(changeCount, 1);
+
+  // -> { called: false }
+  // -> { called: true, payload: 4 }
+
+  expect(log.mock.calls).toEqual([
+    [{ called: false }],
+    [{ called: true, payload: 4 }],
+  ]);
+});
+
+test("useDepend with lock", () => {
+  const changeCount = create.event<number>();
+  const counter = create.component(() => {
+    const changeCountEvent = use.depend(changeCount, false);
+    console.log(changeCountEvent);
+    return null;
+  });
+  const shape = create.shape();
+
+  shape.attach(counter());
+  shape.callEvent(changeCount, 2);
+
+  // -> { called: false }
+
+  expect(log.mock.calls).toEqual([[{ called: false }]]);
+});
+
+test("useTake", async () => {
+  const $count = create.store<number>(-1);
+  const counter = create.component(() => {
+    const takeCount = use.take($count);
+    setTimeout(() => console.log(takeCount()), 100);
+    return null;
+  });
+  const shape = create.shape();
+
+  shape.attach(counter());
+
+  // -> -1
+
+  await new Promise((resolve) => setTimeout(resolve, 200));
+  expect(log.mock.calls).toEqual([[-1]]);
+});
+
+test("usePromise", async () => {
+  const request = () =>
+    new Promise<number>((resolve) => setTimeout(() => resolve(2), 200));
+  const counter = create.component(() => {
+    use.promise(request()).then(console.log);
+    return null;
+  });
+  const shape = create.shape();
+
+  shape.attach(counter());
+
+  // -> 2
+
+  await shape.wait();
+  expect(log.mock.calls).toEqual([[2]]);
 });
