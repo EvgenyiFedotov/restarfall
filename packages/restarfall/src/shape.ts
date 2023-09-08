@@ -293,7 +293,7 @@ const createShape = (parent?: Shape): Shape => {
       roots.flatMap((rootInstance) => [
         ...Array.from(rootInstance.promises),
         ...rootInstance.allChidlren.flatMap((child) =>
-          Array.from(child.promises).flat(),
+          Array.from(child.promises),
         ),
       ]),
     );
