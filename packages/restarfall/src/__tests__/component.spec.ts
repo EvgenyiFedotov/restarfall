@@ -7,9 +7,10 @@ const apiFn = {
   deleteRawValue: jest.fn((_key: string) => undefined),
   getValue: jest.fn(() => undefined as never),
   setValue: jest.fn((_store: Store<unknown>, _value: unknown) => undefined),
+  changeValue: jest.fn((_store: Store<unknown>, _value: unknown) => undefined),
   getEventState: jest.fn(() => ({})),
   callEvent: jest.fn((_event: Event<unknown>, _value: unknown) => undefined),
-  isCallEvent: jest.fn(() => false),
+  isCalledEvent: jest.fn(() => false),
 };
 
 describe("component", () => {
@@ -58,7 +59,7 @@ describe("component", () => {
       apiFn.setValue.mockClear();
       apiFn.getEventState.mockClear();
       apiFn.callEvent.mockClear();
-      apiFn.isCallEvent.mockClear();
+      apiFn.isCalledEvent.mockClear();
     });
 
     test("default", () => {

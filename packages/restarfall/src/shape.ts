@@ -52,6 +52,11 @@ interface ShapePrivate {
   isCalledEvent: <Value>(event: Event<Value>) => boolean;
 }
 
+type CallEvent = {
+  <Value>(event: Event<Value>, value: Value): void;
+  (event: Event<void>): void;
+};
+
 interface Shape {
   type: "shape";
 
@@ -75,7 +80,7 @@ interface Shape {
     event: Event<Value>,
     listener: EventListener<Value>,
   ) => void;
-  callEvent: <Value>(event: Event<Value>, value: Value) => void;
+  callEvent: CallEvent;
 
   // Components
   attach: (element: ComponentElement) => { wait: () => Promise<void> };
@@ -208,7 +213,7 @@ const createShape = (parent?: Shape): Shape => {
     unlistenEvent: (event, listener) => {
       state.events.get(event)?.delete(listener);
     },
-    callEvent: (event, value) => {
+    callEvent: ((event, value) => {
       const prev = shape.getEventState(event);
       const prevCalledEvent = state.calledEvent;
 
@@ -240,7 +245,7 @@ const createShape = (parent?: Shape): Shape => {
       }
 
       state.calledEvent = prevCalledEvent;
-    },
+    }) as CallEvent,
 
     // Components
     attach: (element) => {
@@ -255,7 +260,7 @@ const createShape = (parent?: Shape): Shape => {
         setValue: shape.setValue,
         changeValue: shape.changeValue,
         getEventState: shape.getEventState,
-        isCallEvent: privateApi.isCalledEvent,
+        isCalledEvent: privateApi.isCalledEvent,
         callEvent: shape.callEvent,
       };
 

@@ -25,4 +25,8 @@ shape.attach(counter());
 
 ## Documentation
 
+### You can
+
+#### Use `arguments` into components
+
 ## API

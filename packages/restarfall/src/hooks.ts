@@ -29,11 +29,11 @@ const useDepend = <Value>(
   if (unit.type === "event") {
     instance.depends.set(unit, filter);
     eventState = instance.api.getEventState(unit);
-    called = instance.api.isCallEvent(unit);
+    called = instance.api.isCalledEvent(unit);
   } else {
     instance.depends.set(unit.changed, filter);
     eventState = instance.api.getEventState(unit.changed);
-    called = instance.api.isCallEvent(unit.changed);
+    called = instance.api.isCalledEvent(unit.changed);
   }
 
   return "payload" in eventState
@@ -41,9 +41,13 @@ const useDepend = <Value>(
     : { called };
 };
 
-const useDispatch = <Value>(
+function useDispatch<Value>(
   unit: Event<Value> | Store<Value>,
-): ((value: Value) => void) => {
+): (value: Value) => void;
+function useDispatch(unit: Event<void> | Store<void>): () => void;
+function useDispatch<Value>(
+  unit: Event<Value> | Store<Value>,
+): (value: Value) => void {
   const instance = getInstance();
 
   return (value) => {
@@ -53,7 +57,7 @@ const useDispatch = <Value>(
       instance.api.changeValue(unit, value);
     }
   };
-};
+}
 
 const useValue = <Value>(store: Store<Value>, bindDepend = false): Value => {
   const instance = getInstance();
@@ -77,4 +81,12 @@ const usePromise = <Value>(promise: Promise<Value>): Promise<Value> => {
   return promise;
 };
 
-export { useDepend, useDispatch, useValue, useTake, usePromise };
+const use = {
+  depend: useDepend,
+  dispatch: useDispatch,
+  value: useValue,
+  take: useTake,
+  promise: usePromise,
+};
+
+export { useDepend, useDispatch, useValue, useTake, usePromise, use };

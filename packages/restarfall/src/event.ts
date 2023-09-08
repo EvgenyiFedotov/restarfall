@@ -1,7 +1,7 @@
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface Event<Value> {
   readonly type: "event";
   readonly key: string | null;
+  readonly value?: Value;
 }
 
 const createEvent = <Value>(options?: {

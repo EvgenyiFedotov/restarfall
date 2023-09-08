@@ -51,7 +51,7 @@ interface ComponentApi {
   changeValue: <Value>(store: Store<Value>, value: Value) => void;
   getEventState: <Value>(event: Event<Value>) => { payload?: Value };
   callEvent: <Value>(event: Event<Value>, value: Value) => void;
-  isCallEvent: <Value>(event: Event<Value>) => boolean;
+  isCalledEvent: <Value>(event: Event<Value>) => boolean;
 }
 
 type ComponentReattach = (
