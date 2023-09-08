@@ -3,7 +3,30 @@
   "version": "0.1.13",
   "license": "MIT",
   "author": "Evgenii Fedotov",
-  "description": "Restarfall is a JavaScript library for creating business logic and data management.",
+  "description": "Restarfall-react is a JavaScript library for connect restarfall and react.",
+  "keywords": [
+    "react",
+    "hooks",
+    "context",
+    "business",
+    "logic",
+    "data",
+    "flow",
+    "state management",
+    "data management",
+    "state manager",
+    "model",
+    "reactive",
+    "state",
+    "event",
+    "store",
+    "component",
+    "functional"
+  ],
+  "bugs": {
+    "url": "https://github.com/EvgenyiFedotov/restarfall/issues"
+  },
+  "homepage": "https://github.com/EvgenyiFedotov/restarfall#readme",
   "exports": {
     ".": {
       "import": "./dist/cjs/index.js",
