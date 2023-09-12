@@ -31,7 +31,7 @@ shape.attach(counter());
 
 #### Create `store`
 
-Store is some kind of key to use between components and other third-party libraries.
+A store is some kind of key to use between components and other third-party libraries.
 
 ```ts
 import { create } from "restarfall";
@@ -41,7 +41,7 @@ const $count = create.store<number>(0);
 
 #### Create `event`
 
-Event is some kind of key to use between components and other third-party libraries.
+An event is some kind of key to use between components and other third-party libraries.
 
 ```ts
 import { create } from "restarfall";
@@ -61,7 +61,10 @@ const counter = create.component(() => null);
 
 #### Create `component` with children components
 
-You can use child components in the component body in various variations. Attention! Calling a child component inside a parent component does not guarantee that the body of the child component will be called.
+You can use child components in the component body in various variations.
+
+> [!IMPORTANT]
+> Calling a child component inside a parent component does not guarantee that the body of the child component will be called. To call the body of the child component, you must set it to the `return` of the parent component.
 
 ```ts
 import { create } from "restarfall";
@@ -93,6 +96,8 @@ const counter = create.component(() => [
 
 #### Create `element` from component and use one in other components
 
+When a component is called, an element is created that can be used either as a child component or as a [rooted]() component.
+
 ```ts
 import { create } from "restarfall";
 
@@ -110,13 +115,37 @@ const counter = create.component(() => [
 
 #### Create `shape`
 
+A shape is a certain context relative to which the attached components will be launched. The form stores the raw data (e.g. received via ssr), storage state, data with which events were called, event listeners, and components, both root and child components, to ensure the order in which components are called.
+
 ```ts
 import { create } from "restarfall";
 
 const shape = create.shape();
 ```
 
+#### Attach `root-component` to `shape`
+
+For the created components to work, they need to be attached to the shape.
+
+> [!NOTE]
+> The order of joining affects the order of calling components.
+
+```ts
+import { create } from "restarfall";
+
+const root = create.component(() => null);
+
+const shape = create.shape();
+
+shape.attach(root());
+
+// You can twice attach `root-component` to `shape`
+shape.attach(root());
+```
+
 #### Use `value` hook into component
+
+This hook is essential for working with storage data .
 
 ```ts
 import { create, use } from "restarfall";
@@ -131,6 +160,11 @@ const counter = create.component(() => {
 
 #### Use `depend` hook into component
 
+This hook is required to subscribe to a storage change or event call. When subscribing to a storage change inside the hook, it is just subscribing to an event `$store.changed`. This is why the return value signatures of this hook are the same. When an event is called, the entire body of the component will be recalled. The return values of this hook will contain an object `{ called: boolean: payload?: EventPayload }`.
+
+> [!IMPORTANT]
+> When a component is called again, all child components are unsubscribed from their dependencies. This implementation ensures that an event occurring in the parent component will not be triggered in the child component and will not cause the child component to be called again. In addition, it is possible to enable/disable large branches of business logic under certain conditions.
+
 ```ts
 import { create, use } from "restarfall";
 
@@ -144,7 +178,22 @@ const counter = create.component(() => {
 });
 ```
 
+#### Use fast bind to сhanging store
+
+```ts
+import { create, use } from "restarfall";
+
+const $count = create.store<number>(0);
+
+const counter = create.component(() => {
+  const count = use.value($count, true);
+  return null;
+});
+```
+
 #### Use `filter` for `depend` hook
+
+The filter is necessary to optimise the call to the component body.
 
 ```ts
 import { create, use } from "restarfall";
@@ -159,6 +208,8 @@ const counter = create.component(() => {
 
 #### Lock `depend`
 
+Sometimes you just need to get the values of an event but not subscribe to it.
+
 ```ts
 import { create, use } from "restarfall";
 
@@ -171,6 +222,8 @@ const counter = create.component(() => {
 ```
 
 #### Use `dispatch` hook into component
+
+This hook is required to change the storage or call an event in the component body.
 
 ```ts
 import { create, use } from "restarfall";
@@ -191,6 +244,8 @@ const counter = create.component(() => {
 
 #### Use `take` hook into component
 
+The data hook is needed to get the storage value when the component body context is lost, e.g. in `setTimeout`.
+
 ```ts
 import { create, use } from "restarfall";
 
@@ -207,6 +262,8 @@ const counter = create.component(() => {
 ```
 
 #### Use `promise` hook into component
+
+This hook will come in handy if you are using `ssr`. Using it you can wait for all asynchronous processes to execute.
 
 ```ts
 import { create, use } from "restarfall";
@@ -229,6 +286,47 @@ shape.attach(counter());
 shape.wait().then(() => {
   // all requests done
 });
+```
+
+#### Use `rawData` / `deserialize` / `serialize` into components and shape
+
+These methods are necessary to implement the logic for `ssr`.
+
+> [!IMPORTANT]
+> Raw data cannot be deserialised again. For example, if there are two components that deserialise the same data, deserialisation will happen once.
+
+> [!IMPORTANT]
+> When deserialising, the value must be set correctly, otherwise you may get errors when trying to work with storage data.
+
+```ts
+import { create } from "restarfall";
+
+const $count = create.store<number>(0);
+const $token = create.store<string>("empty");
+
+const counter = create.component(() => null, {
+  deserialize: (getValue) => ({
+    count: {
+      store: $count,
+      value: getValue("_count_").value,
+    },
+    token: {
+      store: $token,
+      value: getValue("token_key").value ?? $token.initialValue,
+    },
+  }),
+  serialize: (getValue) => ({
+    _count_: getValue($count),
+    _token_: getValue($count),
+  }),
+});
+
+const shape = create.shape();
+
+shape.setRawData({ _count_: 2 });
+shape.attach(counter());
+
+const data = shape.serialize(); // data equal { _count_: 2, _token_: "empty" }
 ```
 
 ### Examples
