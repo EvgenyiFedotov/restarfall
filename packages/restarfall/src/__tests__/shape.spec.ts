@@ -39,8 +39,12 @@ test("setRawData", () => {
 test("serialize", () => {
   const shape = create.shape();
   const $count = create.store<number>(-1);
+  const $token = create.store("empty");
   const child = create.component(() => null, {
-    serialize: (getValue) => ({ count_child: getValue($count) }),
+    serialize: (getValue) => ({
+      count_child: getValue($count),
+      token: getValue($token),
+    }),
   });
   const component = create.component(() => child(), {
     serialize: (getValue) => ({ count: getValue($count) }),
@@ -51,9 +55,11 @@ test("serialize", () => {
 
   console.log(shape.serialize());
 
-  // -> { count: 2, count_child: 2 }
+  // -> { count: 2, count_child: 2, token: "empty" }
 
-  expect(log.mock.calls).toEqual([[{ count: 2, count_child: 2 }]]);
+  expect(log.mock.calls).toEqual([
+    [{ count: 2, count_child: 2, token: "empty" }],
+  ]);
 });
 
 test("getValue / hasValue before change", () => {
