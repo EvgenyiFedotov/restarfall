@@ -39,12 +39,12 @@ shape.attach(counter());
 
 ## API
 
-- [restarfall]()
+- [restarfall](https://github.com/EvgenyiFedotov/restarfall/tree/update-docs/packages/restarfall#api)
 - [restrafall-react]()
 
 ## Tests
 
-- [restarfall]()
+- [restarfall](https://github.com/EvgenyiFedotov/restarfall/tree/update-docs/packages/restarfall#tests-jest)
 - [restrafall-react]()
 
 ## Development
