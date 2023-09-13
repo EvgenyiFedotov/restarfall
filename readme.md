@@ -1,6 +1,6 @@
-# Restarfall
+![Screenshot of a comment on a GitHub issue showing an image, added in the Markdown, of an Octocat smiling and raising a tentacle.](assets/13x9.png)
 
-Restarfall is a JavaScript library for creating business logic and data management.
+`Restarfall` is a JavaScript library for creating business logic and data management.
 
 ## Usage
 
