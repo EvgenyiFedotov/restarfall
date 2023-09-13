@@ -428,4 +428,10 @@ This api was created to simplify the import of methods from the library.
 
 - [use](https://github.com/EvgenyiFedotov/restarfall/blob/13e6ecfd7c71c4045c8ab0dd49955f43cfd125dc/packages/restarfall/src/index.ts#L13-L19)
 
-## Tests
+## Tests (jest)
+
+- [check value of store](https://github.com/EvgenyiFedotov/restarfall/blob/dd839eccae117c09a19930860054b2f5b2575988/packages/restarfall/src/__tests__/test-examples.spec.ts#L7-L19)
+
+- [check state of event](https://github.com/EvgenyiFedotov/restarfall/blob/dd839eccae117c09a19930860054b2f5b2575988/packages/restarfall/src/__tests__/test-examples.spec.ts#L21-L33)
+
+- [async check value of store](https://github.com/EvgenyiFedotov/restarfall/blob/dd839eccae117c09a19930860054b2f5b2575988/packages/restarfall/src/__tests__/test-examples.spec.ts#L35-L54)
