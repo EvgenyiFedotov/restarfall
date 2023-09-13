@@ -57,9 +57,12 @@ test("useDispatch by store", () => {
 
 test("useDispatch by event", () => {
   const changeCount = create.event<number>();
+  const incCount = create.event<void>();
   const counter = create.component(() => {
     const setCount = use.dispatch(changeCount);
+    const inc = use.dispatch(incCount);
     setCount(2);
+    inc();
     return null;
   });
   const shape = create.shape();
