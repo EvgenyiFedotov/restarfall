@@ -100,9 +100,13 @@ interface Shape {
   wait: ShapeWait;
 }
 
+interface CreateShape {
+  (parent?: Shape): Shape;
+}
+
 const shapes: WeakMap<Shape, ShapeState> = new WeakMap();
 
-const createShape = (parent?: Shape): Shape => {
+const createShape: CreateShape = (parent) => {
   const parentState = parent ? shapes.get(parent) : null;
 
   // State
@@ -324,12 +328,10 @@ const createShape = (parent?: Shape): Shape => {
     wait,
   };
 
-  shapes.set(shape, {
-    values,
-  });
+  shapes.set(shape, { values });
 
   return shape;
 };
 
-export type { EventListener, Shape, ShapeState };
+export type { EventListener, Shape, CreateShape };
 export { shapes, createShape };

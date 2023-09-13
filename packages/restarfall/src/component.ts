@@ -9,18 +9,31 @@ type Deserialize = (
   getValue: (key: string) => { value?: unknown },
 ) => Partial<Record<string, { store: Store<unknown>; value: unknown }>>;
 
-interface Component<Args extends unknown[]> {
-  (...args: Args): ComponentElement;
-  type: "component";
-}
-
 interface ComponentElement {
   readonly type: "component-element";
   readonly key: string | null;
   readonly index: number;
 }
 
+interface Component<Args extends unknown[]> {
+  (...args: Args): ComponentElement;
+  type: "component";
+}
+
 type Children = null | ComponentElement | ComponentElement[];
+
+interface CreateComponentOptions {
+  key?: string | null;
+  serialize?: Serialize;
+  deserialize?: Deserialize;
+}
+
+interface CreateComponent {
+  <Args extends unknown[]>(
+    body: (...args: Args) => Children,
+    options?: CreateComponentOptions,
+  ): Component<Args>;
+}
 
 type DependFilter<Value> =
   | ((value: Value, params: { payload?: Value }) => boolean)
@@ -77,17 +90,10 @@ const toChildren = (value: Children): ComponentElement[] => {
   return value ? (Array.isArray(value) ? value : [value]) : [];
 };
 
-const createComponent = <Args extends unknown[]>(
-  body: (...args: Args) => Children,
-  options?: {
-    key?: string | null;
-    serialize?: Serialize;
-    deserialize?: Deserialize;
-  },
-): Component<Args> => {
+const createComponent: CreateComponent = (body, options) => {
   let index = 0;
 
-  const component: Component<Args> = (...args) => {
+  const component: Component<Parameters<typeof body>> = (...args) => {
     const element: ComponentElement = {
       type: "component-element",
       key: options?.key ?? null,
@@ -158,8 +164,9 @@ const createComponent = <Args extends unknown[]>(
 };
 
 export type {
-  Component,
   ComponentElement,
+  Component,
+  CreateComponent,
   Children,
   DependFilter,
   ComponentInstance,
