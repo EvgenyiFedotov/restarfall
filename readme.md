@@ -39,6 +39,14 @@ shape.attach(counter());
 
 ## API
 
+- [restarfall](https://github.com/EvgenyiFedotov/restarfall/tree/update-docs/packages/restarfall#api)
+- [restrafall-react]()
+
+## Tests
+
+- [restarfall](https://github.com/EvgenyiFedotov/restarfall/tree/update-docs/packages/restarfall#tests-jest)
+- [restrafall-react]()
+
 ## Development
 
 Create commits by [conventional-commits](https://www.conventionalcommits.org/en/v1.0.0/). For one use `commitlint`.

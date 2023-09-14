@@ -7,11 +7,16 @@ interface Store<Value> {
   readonly changed: Event<Value>;
 }
 
-const createStore = <Value>(
-  value: Value,
-  options?: { key?: string | null },
-): Store<Value> => {
-  let changed: Event<Value> | null = null;
+interface CreateStoreOptions {
+  key?: string | null;
+}
+
+interface CreateStore {
+  <Value>(value: Value, options?: CreateStoreOptions): Store<Value>;
+}
+
+const createStore: CreateStore = (value, options) => {
+  let changed: Event<typeof value> | null = null;
 
   return {
     type: "store",
@@ -20,7 +25,7 @@ const createStore = <Value>(
     get changed() {
       changed =
         changed ??
-        createEvent<Value>({
+        createEvent<typeof value>({
           key: options?.key ? `${options.key}_changed` : null,
         });
 
@@ -29,5 +34,5 @@ const createStore = <Value>(
   };
 };
 
-export type { Store };
+export type { Store, CreateStore };
 export { createStore };

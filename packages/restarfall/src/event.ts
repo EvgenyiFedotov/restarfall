@@ -1,14 +1,20 @@
 interface Event<Value> {
   readonly type: "event";
   readonly key: string | null;
-  readonly value?: Value;
+  readonly value?: Value; // Need for resolve types
 }
 
-const createEvent = <Value>(options?: {
+interface CreateEventOptions {
   key?: string | null;
-}): Event<Value> => {
+}
+
+interface CreateEvent {
+  <Value>(options?: CreateEventOptions): Event<Value>;
+}
+
+const createEvent: CreateEvent = (options) => {
   return { type: "event", key: options?.key ?? null };
 };
 
-export type { Event };
+export type { Event, CreateEvent };
 export { createEvent };
