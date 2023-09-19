@@ -1,5 +1,6 @@
 import { Event } from "./event";
 import { Store } from "./store";
+import { Cache, createCache } from "./cache";
 
 type Serialize = (
   getValue: <Value>(store: Store<Value>) => Value,
@@ -20,7 +21,9 @@ interface Component<Args extends unknown[]> {
   type: "component";
 }
 
-type Children = null | ComponentElement | ComponentElement[];
+type ChildElement = null | ComponentElement;
+
+type ChildrenElements = null | ChildElement | ChildElement[];
 
 interface CreateComponentOptions {
   key?: string | null;
@@ -30,7 +33,7 @@ interface CreateComponentOptions {
 
 interface CreateComponent {
   <Args extends unknown[]>(
-    body: (...args: Args) => Children,
+    body: (...args: Args) => ChildrenElements,
     options?: CreateComponentOptions,
   ): Component<Args>;
 }
@@ -43,14 +46,22 @@ type DependFilter<Value> =
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Depends = Map<Event<any>, DependFilter<any>>;
 
+type DetachEffects = Set<() => void>;
+
+type AttachEffects = Set<() => void>;
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Promises = Set<Promise<any>>;
 
 interface ComponentInstance {
   type: "component-instance";
-  api: ComponentApi; // del
+  api: ComponentApi; // TODO Remove
   element: ComponentElement;
   depends: Depends;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  cache: Cache<any>;
+  detachEffects: DetachEffects;
+  attachEffects: AttachEffects;
   promises: Promises;
   children: ComponentInstance[];
   allChidlren: ComponentInstance[];
@@ -70,6 +81,7 @@ interface ComponentApi {
 type ComponentReattach = (
   instance: ComponentInstance,
   api: ComponentApi,
+  isAttach?: boolean,
 ) => void;
 
 type ComponentAttach = (api: ComponentApi) => ComponentInstance;
@@ -86,7 +98,7 @@ const elements: WeakMap<
 
 const stackInstances: ComponentInstance[] = [];
 
-const toChildren = (value: Children): ComponentElement[] => {
+const toChildrenElements = (value: ChildrenElements): ChildElement[] => {
   return value ? (Array.isArray(value) ? value : [value]) : [];
 };
 
@@ -100,8 +112,14 @@ const createComponent: CreateComponent = (body, options) => {
       index: (index += 1),
     };
 
-    const reattach: ComponentReattach = (instance, api) => {
+    const reattach: ComponentReattach = (instance, api, isAttach = false) => {
+      const children = instance.children;
+      const detachEffects = instance.detachEffects;
+      const attachEffects = instance.attachEffects;
+
       instance.depends = new Map();
+      instance.detachEffects = new Set();
+      instance.attachEffects = new Set();
       instance.promises = new Set();
       instance.children = [];
 
@@ -116,13 +134,28 @@ const createComponent: CreateComponent = (body, options) => {
         },
       );
 
-      toChildren(body(...args)).forEach((child) => {
-        const childInstance = elements.get(child)?.attach(api);
+      toChildrenElements(body(...args)).forEach((element, index) => {
+        if (!element) return;
 
-        if (!childInstance) return;
+        const elementApi = elements.get(element);
 
-        instance.children.push(childInstance);
+        if (!elementApi) return;
+
+        if (element === children[index]?.element) {
+          const child = children[index];
+
+          elementApi.reattach(child, api);
+          instance.children.push(child);
+          return;
+        }
+
+        instance.children.push(elementApi.attach(api));
       });
+
+      if (!isAttach) {
+        instance.detachEffects = detachEffects;
+        instance.attachEffects = attachEffects;
+      }
 
       stackInstances.pop();
     };
@@ -133,6 +166,9 @@ const createComponent: CreateComponent = (body, options) => {
         api,
         element,
         depends: new Map(),
+        cache: createCache(),
+        detachEffects: new Set(),
+        attachEffects: new Set(),
         promises: new Set(),
         children: [],
         get allChidlren() {
@@ -143,7 +179,7 @@ const createComponent: CreateComponent = (body, options) => {
         },
       };
 
-      reattach(instance, api);
+      reattach(instance, api, true);
 
       return instance;
     };
@@ -167,9 +203,9 @@ export type {
   ComponentElement,
   Component,
   CreateComponent,
-  Children,
+  ChildrenElements,
   DependFilter,
   ComponentInstance,
   ComponentApi,
 };
-export { elements, stackInstances, toChildren, createComponent };
+export { elements, stackInstances, toChildrenElements, createComponent };

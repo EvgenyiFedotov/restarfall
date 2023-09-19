@@ -320,3 +320,37 @@ test("twice attach component", () => {
     ["counter", 1],
   ]);
 });
+
+test("use element without cache", () => {
+  const change = create.event<void>();
+
+  const update = create.component(() => {
+    use.attach(() => console.log("attach"));
+    use.detach(() => console.log("detach"));
+    return null;
+  });
+
+  const updating = update();
+
+  const counter = create.component(() => {
+    use.depend(change);
+    return [update(), updating];
+  });
+
+  const shape = create.shape();
+
+  shape.attach(counter());
+  shape.callEvent(change);
+
+  // -> "attach"
+  // -> "attach"
+  // -> "detach"
+  // -> "attach"
+
+  expect(log.mock.calls).toEqual([
+    ["attach"],
+    ["attach"],
+    ["detach"],
+    ["attach"],
+  ]);
+});
