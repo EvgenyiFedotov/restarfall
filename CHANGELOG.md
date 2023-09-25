@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.1.15](https://github.com/EvgenyiFedotov/restarfall/compare/v0.1.14...v0.1.15) (2023-09-25)
+
+
+### Features
+
+* **restarfall:** add hooks useCache, useDetach, useAttach ([809120d](https://github.com/EvgenyiFedotov/restarfall/commit/809120d4706ae84423203d8e2b5b0d269e806131))
+
 ### [0.1.14](https://github.com/EvgenyiFedotov/restarfall/compare/v0.1.13...v0.1.14) (2023-09-08)
 
 ### [0.1.13](https://github.com/EvgenyiFedotov/restarfall/compare/v0.1.12...v0.1.13) (2023-09-07)
