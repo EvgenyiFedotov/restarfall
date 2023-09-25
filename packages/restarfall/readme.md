@@ -328,6 +328,22 @@ const counter = create.component(() => {
 
 This use of the hook will make it possible not to create an additional store for caching similar data types.
 
+```ts
+import { create, use } from "restarfall";
+
+const $count = create.store<number>(0);
+
+const counter = create.component(() => {
+  const countCacheFirst = use.cache($count, "first");
+  const countCacheLast = use.cache($count, "last");
+
+  countCacheFirst.take(() => 5);
+  countCacheLast.take(() => 10);
+
+  return null;
+});
+```
+
 #### Use `detach` hook (effect) into component
 
 This hook is required to detect the event of detaching a component element from the component tree.
@@ -428,9 +444,54 @@ const counter = create.component(() => [firstUpdate, lastUpdate]);
 
 ### Component life cycle
 
+```mermaid
+flowchart LR
+  component("Create component")
+  element("Create element")
+  instance("Create instance")
+  attach("Attach instance")
+  reattach("Reattach instance")
+  detach("Detach instance")
+
+  component --> element
+  element --> instance
+  instance --> attach
+  attach -.-> reattach
+  reattach -.-> detach
+  attach -.-> detach
+```
+
 ### Algorithm for attaching a root-component to a shape
 
+```mermaid
+flowchart LR
+  attach("Attach root component")
+  push("Push root to shape")
+  link("Link depends")
+  attachEffects("Call attach effects")
+
+  attach --> push
+  push -->link
+  link --> attachEffects
+```
+
 ### Algorithm for updating a component after a storage change or event call
+
+```mermaid
+flowchart LR
+  filterDepend("Filter depend")
+  unlink("Unlink depends")
+  reattach("Reattach current instance")
+  link("Link depends")
+  detachEffects("Call detach effects")
+  attachEffects("Call attach effects")
+
+  filterDepend --> unlink
+  unlink --> reattach
+  reattach --> link
+  link --> detachEffects
+  detachEffects --> attachEffects
+```
 
 ## API
 
@@ -457,6 +518,12 @@ const counter = create.component(() => [firstUpdate, lastUpdate]);
 - [useTake](https://github.com/EvgenyiFedotov/restarfall/blob/13e6ecfd7c71c4045c8ab0dd49955f43cfd125dc/packages/restarfall/src/hooks.ts#L84-L86)
 
 - [usePromise](https://github.com/EvgenyiFedotov/restarfall/blob/13e6ecfd7c71c4045c8ab0dd49955f43cfd125dc/packages/restarfall/src/hooks.ts#L94-L96)
+
+- [useCache](https://github.com/EvgenyiFedotov/restarfall/blob/12c999db000c8b22dba24f7589779c40ef257b48/packages/restarfall/src/hooks.ts#L112-L114)
+
+- [useDetach](https://github.com/EvgenyiFedotov/restarfall/blob/12c999db000c8b22dba24f7589779c40ef257b48/packages/restarfall/src/hooks.ts#L129-L131)
+
+- [useAttach](https://github.com/EvgenyiFedotov/restarfall/blob/12c999db000c8b22dba24f7589779c40ef257b48/packages/restarfall/src/hooks.ts#L139-L141)
 
 ### Shape
 
