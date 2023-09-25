@@ -14,7 +14,7 @@ type ShapeRawData = Record<string, unknown>;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type ShapeValues = Map<Store<unknown>, any>;
 
-// State[Events]
+// State [Events]
 type EventListener<Value> = (value: Value, state: { payload?: Value }) => void;
 type ShapeDepends = Map<
   ComponentInstance,
@@ -29,7 +29,7 @@ type ShapeEvents = Map<Event<unknown>, Set<EventListener<any>>>;
 type ShapePayloads = Map<Event<unknown>, any>;
 type ShapeCalledEvent = Event<unknown> | null;
 
-// State[Components]
+// State [Components]
 type ShapeRoots = ComponentInstance[];
 
 // Methods [Data]
@@ -254,13 +254,14 @@ const createShape: CreateShape = (parent) => {
       <Value>(filter: DependFilter<Value>, event: Event<Value>): void => {
         const listener: EventListener<Value> = (value, prev) => {
           // filter
-          // if (!componentApi) return;
           if (filter === false) return;
           if (filter && filter(value, prev) === false) return;
 
+          const prevAllChidlren = new Set(instance.allChidlren);
+
           // unlink
           unlinkInstance(instance);
-          instance.allChidlren.forEach((childInstance) => {
+          prevAllChidlren.forEach((childInstance) => {
             unlinkInstance(childInstance);
           });
 
@@ -276,10 +277,26 @@ const createShape: CreateShape = (parent) => {
             callEvent,
           });
 
+          const currAllChildren = new Set(instance.allChidlren);
+
           // link
           instance.depends.forEach(createListen(instance));
-          instance.allChidlren.forEach((childInstance) => {
+          currAllChildren.forEach((childInstance) => {
             childInstance.depends.forEach(createListen(childInstance));
+          });
+
+          // detach effect
+          prevAllChidlren.forEach((childInstance) => {
+            if (!currAllChildren.has(childInstance)) {
+              childInstance.detachEffects.forEach((effect) => effect());
+            }
+          });
+
+          // attach effect
+          currAllChildren.forEach((childInstance) => {
+            if (!prevAllChidlren.has(childInstance)) {
+              childInstance.attachEffects.forEach((effect) => effect());
+            }
           });
         };
 
@@ -290,6 +307,12 @@ const createShape: CreateShape = (parent) => {
     rootInstance.depends.forEach(createListen(rootInstance));
     rootInstance.allChidlren.forEach((childInstance) => {
       childInstance.depends.forEach(createListen(childInstance));
+    });
+
+    // attach effect
+    rootInstance.attachEffects.forEach((effect) => effect());
+    rootInstance.allChidlren.forEach((childInstance) => {
+      childInstance.attachEffects.forEach((effect) => effect());
     });
   };
   const wait: ShapeWait = async () => {

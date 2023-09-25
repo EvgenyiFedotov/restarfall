@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-import { create, use } from "../index";
+import { ComponentElement, create, use } from "../index";
 
 const log = jest.fn();
 global.console = { ...console, log };
@@ -176,4 +176,253 @@ test("usePromise", async () => {
 
   await shape.wait();
   expect(log.mock.calls).toEqual([[2], [2]]);
+});
+
+test("useCache", () => {
+  const $count = create.store<number>(0);
+
+  const counter = create.component(() => {
+    const countCache = use.cache($count);
+    const countByGet = countCache.get();
+    const countByTake = countCache.take(() => 1);
+
+    console.log(
+      use.value($count, true),
+      countByGet,
+      countByTake,
+      countCache.set(2),
+    );
+
+    return null;
+  });
+
+  const shape = create.shape();
+
+  shape.attach(counter());
+  shape.changeValue($count, 33);
+
+  // -> 0 {} 1 2
+  // -> 33 { value: 2 } 2 2
+
+  expect(log.mock.calls).toEqual([
+    [0, {}, 1, 2],
+    [33, { value: 2 }, 2, 2],
+  ]);
+});
+
+test("useCache element", () => {
+  const $updateElement = create.store<ComponentElement | null>(null);
+
+  const change = create.event<void>();
+
+  const update = create.component(() => {
+    return null;
+  });
+
+  const counter = create.component(() => {
+    const updateElement = use.cache($updateElement).take(update);
+    console.log(updateElement);
+    use.depend(change);
+    return [updateElement];
+  });
+
+  const shape = create.shape();
+
+  shape.attach(counter());
+  shape.callEvent(change);
+  shape.callEvent(change);
+
+  expect(log.mock.calls).toHaveLength(3);
+  expect(log.mock.calls[0][0].type).toBe("component-element");
+  expect(log.mock.calls[1][0].type).toBe("component-element");
+  expect(log.mock.calls[0][0]).toBe(log.mock.calls[1][0]);
+  expect(log.mock.calls[0][0]).toBe(log.mock.calls[2][0]);
+});
+
+test("useCache with tail", () => {
+  const $updateElement = create.store<ComponentElement | null>(null);
+
+  const change = create.event<void>();
+
+  const update = create.component(() => {
+    return null;
+  });
+
+  const counter = create.component(() => {
+    const elements = {
+      first: use.cache($updateElement, "first").take(update),
+      last: use.cache($updateElement, "last").take(update),
+    };
+    console.log(elements);
+    use.depend(change);
+    return [elements.first, elements.last];
+  });
+
+  const shape = create.shape();
+
+  shape.attach(counter());
+  shape.callEvent(change);
+
+  expect(log.mock.calls).toHaveLength(2);
+  expect(log.mock.calls[0][0].first.type).toBe("component-element");
+  expect(log.mock.calls[0][0].last.type).toBe("component-element");
+  expect(log.mock.calls[0][0].first).toBe(log.mock.calls[1][0].first);
+  expect(log.mock.calls[0][0].last).toBe(log.mock.calls[1][0].last);
+});
+
+test("useDetach", () => {
+  const change = create.event<void>();
+
+  const update = create.component(() => {
+    use.detach(() => console.log("detach"));
+    return null;
+  });
+
+  const counter = create.component(() => {
+    use.depend(change);
+    return [update(), update()];
+  });
+
+  const shape = create.shape();
+
+  shape.attach(counter());
+  shape.callEvent(change);
+
+  expect(log.mock.calls).toEqual([["detach"], ["detach"]]);
+});
+
+test("useDetach with cache element", () => {
+  const $updateElement = create.store<ComponentElement | null>(null);
+
+  const change = create.event<void>();
+
+  const update = create.component(() => {
+    use.detach(() => console.log("detach"));
+    return null;
+  });
+
+  const counter = create.component(() => {
+    use.depend(change);
+    return [use.cache($updateElement).take(update), update()];
+  });
+
+  const shape = create.shape();
+
+  shape.attach(counter());
+  shape.callEvent(change);
+
+  expect(log.mock.calls).toEqual([["detach"]]);
+});
+
+test("useDetach [deep]", () => {
+  const change = create.event<void>();
+
+  const setValue = create.component(() => {
+    use.detach(() => console.log("detach"));
+    console.log("setValue");
+    return null;
+  });
+
+  const update = create.component(() => setValue());
+
+  const counter = create.component(() => {
+    use.depend(change);
+    return update();
+  });
+
+  const shape = create.shape();
+
+  shape.attach(counter());
+  shape.callEvent(change);
+
+  // -> "setValue"
+  // -> "setValue"
+  // -> "detach"
+
+  expect(log.mock.calls).toEqual([["setValue"], ["setValue"], ["detach"]]);
+});
+
+test("useAttach", () => {
+  const change = create.event<void>();
+
+  const update = create.component(() => {
+    use.attach(() => console.log("attach"));
+    return null;
+  });
+
+  const counter = create.component(() => {
+    use.depend(change);
+    return [update(), update()];
+  });
+
+  const shape = create.shape();
+
+  shape.attach(counter());
+  shape.callEvent(change);
+
+  expect(log.mock.calls).toEqual([
+    ["attach"],
+    ["attach"],
+    ["attach"],
+    ["attach"],
+  ]);
+});
+
+test("useAttach with cache element", () => {
+  const $updateElement = create.store<ComponentElement | null>(null);
+
+  const change = create.event<void>();
+
+  const update = create.component(() => {
+    use.attach(() => console.log("attach"));
+    return null;
+  });
+
+  const counter = create.component(() => {
+    use.depend(change);
+    return [use.cache($updateElement).take(update), update()];
+  });
+
+  const shape = create.shape();
+
+  shape.attach(counter());
+  shape.callEvent(change);
+
+  expect(log.mock.calls).toEqual([["attach"], ["attach"], ["attach"]]);
+});
+
+test("useAttach [deep]", () => {
+  const change = create.event<void>();
+
+  const setValue = create.component(() => {
+    use.attach(() => console.log("attach"));
+    console.log("setValue");
+    return null;
+  });
+
+  const update = create.component(() => setValue());
+
+  const counter = create.component(() => {
+    use.attach(() => console.log("counter.attach"));
+    use.depend(change);
+    return update();
+  });
+
+  const shape = create.shape();
+
+  shape.attach(counter());
+  shape.callEvent(change);
+
+  // -> "setValue"
+  // -> "attach"
+  // -> "setValue"
+  // -> "attach"
+
+  expect(log.mock.calls).toEqual([
+    ["setValue"],
+    ["counter.attach"],
+    ["attach"],
+    ["setValue"],
+    ["attach"],
+  ]);
 });

@@ -70,7 +70,7 @@ const useDispatch: UseDispatch = <Value>(
 };
 
 interface UseValue {
-  <Value>(store: Store<Value>, bindDepend: boolean): Value;
+  <Value>(store: Store<Value>, bindDepend?: boolean): Value;
 }
 
 const useValue: UseValue = (store, bindDepend = false) => {
@@ -103,5 +103,66 @@ const usePromise: UsePromise = (promise) => {
   return promise;
 };
 
-export type { UseDepend, UseDispatch, UseValue, UseTake, UsePromise };
-export { useDepend, useDispatch, useValue, useTake, usePromise };
+interface CacheApi<Value> {
+  get(): { value?: Value };
+  set(value: Value): Value;
+  take(create: () => Value): Value;
+}
+
+interface UseCache {
+  <Value>(store: Store<Value>, ...keys: unknown[]): CacheApi<Value>;
+}
+
+const useCache: UseCache = <Value>(
+  store: Store<Value>,
+  ...keys: unknown[]
+): CacheApi<Value> => {
+  const { cache } = getInstance();
+
+  return {
+    get: () => cache.get([store, keys]),
+    set: (value) => cache.set([store, keys], value),
+    take: (create) => cache.take([store, keys], create),
+  };
+};
+
+interface UseDetach {
+  (callback: () => void): void;
+}
+
+const useDetach: UseDetach = (callback) => {
+  const instance = getInstance();
+
+  instance.detachEffects.add(callback);
+};
+
+interface UseAttach {
+  (callback: () => void): void;
+}
+
+const useAttach: UseAttach = (callback) => {
+  const instance = getInstance();
+
+  instance.attachEffects.add(callback);
+};
+
+export type {
+  UseDepend,
+  UseDispatch,
+  UseValue,
+  UseTake,
+  UsePromise,
+  UseCache,
+  UseDetach,
+  UseAttach,
+};
+export {
+  useDepend,
+  useDispatch,
+  useValue,
+  useTake,
+  usePromise,
+  useCache,
+  useDetach,
+  useAttach,
+};

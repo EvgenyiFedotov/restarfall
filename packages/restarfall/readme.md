@@ -301,6 +301,69 @@ shape.wait().then(() => {
 });
 ```
 
+#### Use `cache` hook into component
+
+This hook is required to cache any data inside the component body.
+
+> [!NOTE]
+> It can help with reducing the number of attachments/ detachments of child components, because the comparison of children of the previous and current steps is used for optimisation.
+
+```ts
+import { create, use } from "restarfall";
+
+const $count = create.store<number>(0);
+
+const counter = create.component(() => {
+  const countCache = use.cache($count);
+  const countByGet = countCache.get().value;
+  const countByTake = countCache.take(() => 3);
+
+  countCache.set(5);
+
+  return null;
+});
+```
+
+#### Use `cache` hook with added keys
+
+This use of the hook will make it possible not to create an additional store for caching similar data types.
+
+#### Use `detach` hook (effect) into component
+
+This hook is required to detect the event of detaching a component element from the component tree.
+
+```ts
+import { create, use } from "restarfall";
+
+const $count = create.store<number>(0);
+
+const counter = create.component(() => {
+  const setCount = use.dispatch($count);
+
+  use.detach(() => setCount($count.initialValue));
+
+  return null;
+});
+```
+
+#### Use `attach` hook (effect) into component
+
+This hook is required to detect the attachment event of a component element in the component tree.
+
+```ts
+import { create, use } from "restarfall";
+
+const $count = create.store<number>(0);
+
+const counter = create.component(() => {
+  const setCount = use.dispatch($count);
+
+  use.detach(() => setCount(4));
+
+  return null;
+});
+```
+
 #### Use `rawData` / `deserialize` / `serialize` into components and shape
 
 These methods are necessary to implement the logic for `ssr`.
@@ -340,6 +403,21 @@ shape.setRawData({ _count_: 2 });
 shape.attach(counter());
 
 const data = shape.serialize(); // data equal { _count_: 2, _token_: "empty" }
+```
+
+#### Use created elements into parent component
+
+This technique can be used instead of caching elements inside the component body, especially if the arguments of child components do not change dynamically.
+
+```ts
+import { create, use } from "restarfall";
+
+const update = create.component((name: string) => null);
+
+const firstUpdate = update("first");
+const lastUpdate = update("last");
+
+const counter = create.component(() => [firstUpdate, lastUpdate]);
 ```
 
 ### Examples
