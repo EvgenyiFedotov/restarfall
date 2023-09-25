@@ -54,3 +54,4 @@ export {
   useDetach,
   useAttach,
 } from "./hooks";
+export type { CalledEventState } from "./hooks";

@@ -147,6 +147,7 @@ const useAttach: UseAttach = (callback) => {
 };
 
 export type {
+  CalledEventState,
   UseDepend,
   UseDispatch,
   UseValue,
