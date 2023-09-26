@@ -21,23 +21,6 @@ test("useValue", () => {
   expect(log.mock.calls).toEqual([[-1]]);
 });
 
-test("useValue with bind depend", () => {
-  const $count = create.store<number>(-1);
-  const counter = create.unit(() => {
-    const count = use.value($count, true);
-    console.log(count);
-    return null;
-  });
-  const shape = create.shape();
-
-  shape.attach(counter());
-  shape.changeValue($count, 2);
-
-  // -> -1
-
-  expect(log.mock.calls).toEqual([[-1], [2]]);
-});
-
 test("useDispatch by store", () => {
   const $count = create.store<number>(-1);
   const counter = create.unit(() => {
@@ -186,12 +169,9 @@ test("useCache", () => {
     const countByGet = countCache.get();
     const countByTake = countCache.take(() => 1);
 
-    console.log(
-      use.value($count, true),
-      countByGet,
-      countByTake,
-      countCache.set(2),
-    );
+    use.depend($count);
+
+    console.log(use.value($count), countByGet, countByTake, countCache.set(2));
 
     return null;
   });

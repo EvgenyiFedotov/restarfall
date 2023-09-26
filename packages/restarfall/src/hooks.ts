@@ -64,14 +64,11 @@ const useDispatch: UseDispatch = <Value>(
 };
 
 interface UseValue {
-  <Value>(store: Store<Value>, bindDepend?: boolean): Value;
+  <Value>(store: Store<Value>): Value;
 }
 
-const useValue: UseValue = (store, bindDepend = false) => {
+const useValue: UseValue = (store) => {
   const context = getCurrentUnitContext();
-
-  if (bindDepend) useDepend(store);
-
   return context.shapeApi.getValue(store);
 };
 

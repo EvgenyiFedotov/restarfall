@@ -188,19 +188,6 @@ const counter = create.unit(() => {
 });
 ```
 
-#### Use fast bind to сhanging store
-
-```ts
-import { create, use } from "restarfall";
-
-const $count = create.store<number>(0);
-
-const counter = create.unit(() => {
-  const count = use.value($count, true);
-  return null;
-});
-```
-
 #### Use `filter` for `depend` hook
 
 The filter is necessary to optimise the call to the unit body.
