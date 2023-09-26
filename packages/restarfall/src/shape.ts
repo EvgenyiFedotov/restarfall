@@ -1,9 +1,9 @@
 import {
-  ComponentElement,
-  ComponentInstance,
+  UnitElement,
+  UnitElementInstance,
   DependFilter,
   elements,
-} from "./component";
+} from "./unit";
 import { Event } from "./event";
 import { Store } from "./store";
 
@@ -17,20 +17,20 @@ type ShapeValues = Map<Store<unknown>, any>;
 // State [Events]
 type EventListener<Value> = (value: Value, state: { payload?: Value }) => void;
 type ShapeDepends = Map<
-  ComponentInstance,
+  UnitElementInstance,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   Set<{ event: Event<unknown>; listener: EventListener<any> }>
 >;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-type ShapeListeners = Map<EventListener<any>, ComponentInstance>;
+type ShapeListeners = Map<EventListener<any>, UnitElementInstance>;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type ShapeEvents = Map<Event<unknown>, Set<EventListener<any>>>;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type ShapePayloads = Map<Event<unknown>, any>;
 type ShapeCalledEvent = Event<unknown> | null;
 
-// State [Components]
-type ShapeRoots = ComponentInstance[];
+// State [Units]
+type ShapeRoots = UnitElementInstance[];
 
 // Methods [Data]
 type ShapeGetRawValue = (key: string) => { value?: unknown };
@@ -46,11 +46,11 @@ type ShapeChangeValue = <Value>(store: Store<Value>, value: Value) => void;
 
 // Methods [Events]
 type ShapeLinkInstance = <Value>(
-  instance: ComponentInstance,
+  instance: UnitElementInstance,
   event: Event<Value>,
   listener: EventListener<Value>,
 ) => void;
-type ShapeUnlinkInstance = (instance: ComponentInstance) => void;
+type ShapeUnlinkInstance = (instance: UnitElementInstance) => void;
 type ShapeIsCalledEvent = <Value>(event: Event<Value>) => boolean;
 type ShapeGetEventState = <Value>(event: Event<Value>) => { payload?: Value };
 type ShapeUnlistenEvent = <Value>(
@@ -66,8 +66,8 @@ interface ShapeCallEvent {
   (event: Event<void>): void;
 }
 
-// Methods [Components]
-type ShapeAttach = (element: ComponentElement) => void;
+// Methods [Units]
+type ShapeAttach = (element: UnitElement) => void;
 type ShapeWait = () => Promise<void>;
 
 // Shape
@@ -95,7 +95,7 @@ interface Shape {
   listenEvent: ShapeListenEvent;
   callEvent: ShapeCallEvent;
 
-  // Methods [Components]
+  // Methods [Units]
   attach: ShapeAttach;
   wait: ShapeWait;
 }
@@ -250,7 +250,7 @@ const createShape: CreateShape = (parent) => {
     roots.push(rootInstance);
 
     const createListen =
-      (instance: ComponentInstance) =>
+      (instance: UnitElementInstance) =>
       <Value>(filter: DependFilter<Value>, event: Event<Value>): void => {
         const listener: EventListener<Value> = (value, prev) => {
           // filter
@@ -346,7 +346,7 @@ const createShape: CreateShape = (parent) => {
     listenEvent,
     callEvent,
 
-    // Methods [Components]
+    // Methods [Units]
     attach,
     wait,
   };

@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-import { ComponentElement, create, use } from "../index";
+import { UnitElement, create, use } from "../index";
 
 const log = jest.fn();
 global.console = { ...console, log };
@@ -7,7 +7,7 @@ beforeEach(() => log.mockClear());
 
 test("useValue", () => {
   const $count = create.store<number>(-1);
-  const counter = create.component(() => {
+  const counter = create.unit(() => {
     const count = use.value($count);
     console.log(count);
     return null;
@@ -23,7 +23,7 @@ test("useValue", () => {
 
 test("useValue with bind depend", () => {
   const $count = create.store<number>(-1);
-  const counter = create.component(() => {
+  const counter = create.unit(() => {
     const count = use.value($count, true);
     console.log(count);
     return null;
@@ -40,7 +40,7 @@ test("useValue with bind depend", () => {
 
 test("useDispatch by store", () => {
   const $count = create.store<number>(-1);
-  const counter = create.component(() => {
+  const counter = create.unit(() => {
     const setCount = use.dispatch($count);
     setCount(2);
     return null;
@@ -58,7 +58,7 @@ test("useDispatch by store", () => {
 test("useDispatch by event", () => {
   const changeCount = create.event<number>();
   const incCount = create.event<void>();
-  const counter = create.component(() => {
+  const counter = create.unit(() => {
     const setCount = use.dispatch(changeCount);
     const inc = use.dispatch(incCount);
     setCount(2);
@@ -77,7 +77,7 @@ test("useDispatch by event", () => {
 
 test("useDepend without filter", () => {
   const changeCount = create.event<number>();
-  const counter = create.component(() => {
+  const counter = create.unit(() => {
     const changeCountEvent = use.depend(changeCount);
     console.log(changeCountEvent);
     return null;
@@ -98,7 +98,7 @@ test("useDepend without filter", () => {
 
 test("useDepend with filter", () => {
   const changeCount = create.event<number>();
-  const counter = create.component(() => {
+  const counter = create.unit(() => {
     const changeCountEvent = use.depend(
       changeCount,
       (value, { payload }) => value > 2 && payload === 2,
@@ -124,7 +124,7 @@ test("useDepend with filter", () => {
 
 test("useDepend with lock", () => {
   const changeCount = create.event<number>();
-  const counter = create.component(() => {
+  const counter = create.unit(() => {
     const changeCountEvent = use.depend(changeCount, false);
     console.log(changeCountEvent);
     return null;
@@ -141,7 +141,7 @@ test("useDepend with lock", () => {
 
 test("useTake", async () => {
   const $count = create.store<number>(-1);
-  const counter = create.component(() => {
+  const counter = create.unit(() => {
     const takeCount = use.take($count);
     setTimeout(() => console.log(takeCount()), 100);
     return null;
@@ -159,11 +159,11 @@ test("useTake", async () => {
 test("usePromise", async () => {
   const request = () =>
     new Promise<number>((resolve) => setTimeout(() => resolve(2), 200));
-  const update = create.component(() => {
+  const update = create.unit(() => {
     use.promise(request()).then(console.log);
     return null;
   });
-  const counter = create.component(() => {
+  const counter = create.unit(() => {
     use.promise(request()).then(console.log);
     return update();
   });
@@ -181,7 +181,7 @@ test("usePromise", async () => {
 test("useCache", () => {
   const $count = create.store<number>(0);
 
-  const counter = create.component(() => {
+  const counter = create.unit(() => {
     const countCache = use.cache($count);
     const countByGet = countCache.get();
     const countByTake = countCache.take(() => 1);
@@ -211,15 +211,15 @@ test("useCache", () => {
 });
 
 test("useCache element", () => {
-  const $updateElement = create.store<ComponentElement | null>(null);
+  const $updateElement = create.store<UnitElement | null>(null);
 
   const change = create.event<void>();
 
-  const update = create.component(() => {
+  const update = create.unit(() => {
     return null;
   });
 
-  const counter = create.component(() => {
+  const counter = create.unit(() => {
     const updateElement = use.cache($updateElement).take(update);
     console.log(updateElement);
     use.depend(change);
@@ -233,22 +233,22 @@ test("useCache element", () => {
   shape.callEvent(change);
 
   expect(log.mock.calls).toHaveLength(3);
-  expect(log.mock.calls[0][0].type).toBe("component-element");
-  expect(log.mock.calls[1][0].type).toBe("component-element");
+  expect(log.mock.calls[0][0].type).toBe("unit-element");
+  expect(log.mock.calls[1][0].type).toBe("unit-element");
   expect(log.mock.calls[0][0]).toBe(log.mock.calls[1][0]);
   expect(log.mock.calls[0][0]).toBe(log.mock.calls[2][0]);
 });
 
 test("useCache with tail", () => {
-  const $updateElement = create.store<ComponentElement | null>(null);
+  const $updateElement = create.store<UnitElement | null>(null);
 
   const change = create.event<void>();
 
-  const update = create.component(() => {
+  const update = create.unit(() => {
     return null;
   });
 
-  const counter = create.component(() => {
+  const counter = create.unit(() => {
     const elements = {
       first: use.cache($updateElement, "first").take(update),
       last: use.cache($updateElement, "last").take(update),
@@ -264,8 +264,8 @@ test("useCache with tail", () => {
   shape.callEvent(change);
 
   expect(log.mock.calls).toHaveLength(2);
-  expect(log.mock.calls[0][0].first.type).toBe("component-element");
-  expect(log.mock.calls[0][0].last.type).toBe("component-element");
+  expect(log.mock.calls[0][0].first.type).toBe("unit-element");
+  expect(log.mock.calls[0][0].last.type).toBe("unit-element");
   expect(log.mock.calls[0][0].first).toBe(log.mock.calls[1][0].first);
   expect(log.mock.calls[0][0].last).toBe(log.mock.calls[1][0].last);
 });
@@ -273,12 +273,12 @@ test("useCache with tail", () => {
 test("useDetach", () => {
   const change = create.event<void>();
 
-  const update = create.component(() => {
+  const update = create.unit(() => {
     use.detach(() => console.log("detach"));
     return null;
   });
 
-  const counter = create.component(() => {
+  const counter = create.unit(() => {
     use.depend(change);
     return [update(), update()];
   });
@@ -292,16 +292,16 @@ test("useDetach", () => {
 });
 
 test("useDetach with cache element", () => {
-  const $updateElement = create.store<ComponentElement | null>(null);
+  const $updateElement = create.store<UnitElement | null>(null);
 
   const change = create.event<void>();
 
-  const update = create.component(() => {
+  const update = create.unit(() => {
     use.detach(() => console.log("detach"));
     return null;
   });
 
-  const counter = create.component(() => {
+  const counter = create.unit(() => {
     use.depend(change);
     return [use.cache($updateElement).take(update), update()];
   });
@@ -317,15 +317,15 @@ test("useDetach with cache element", () => {
 test("useDetach [deep]", () => {
   const change = create.event<void>();
 
-  const setValue = create.component(() => {
+  const setValue = create.unit(() => {
     use.detach(() => console.log("detach"));
     console.log("setValue");
     return null;
   });
 
-  const update = create.component(() => setValue());
+  const update = create.unit(() => setValue());
 
-  const counter = create.component(() => {
+  const counter = create.unit(() => {
     use.depend(change);
     return update();
   });
@@ -345,12 +345,12 @@ test("useDetach [deep]", () => {
 test("useAttach", () => {
   const change = create.event<void>();
 
-  const update = create.component(() => {
+  const update = create.unit(() => {
     use.attach(() => console.log("attach"));
     return null;
   });
 
-  const counter = create.component(() => {
+  const counter = create.unit(() => {
     use.depend(change);
     return [update(), update()];
   });
@@ -369,16 +369,16 @@ test("useAttach", () => {
 });
 
 test("useAttach with cache element", () => {
-  const $updateElement = create.store<ComponentElement | null>(null);
+  const $updateElement = create.store<UnitElement | null>(null);
 
   const change = create.event<void>();
 
-  const update = create.component(() => {
+  const update = create.unit(() => {
     use.attach(() => console.log("attach"));
     return null;
   });
 
-  const counter = create.component(() => {
+  const counter = create.unit(() => {
     use.depend(change);
     return [use.cache($updateElement).take(update), update()];
   });
@@ -394,15 +394,15 @@ test("useAttach with cache element", () => {
 test("useAttach [deep]", () => {
   const change = create.event<void>();
 
-  const setValue = create.component(() => {
+  const setValue = create.unit(() => {
     use.attach(() => console.log("attach"));
     console.log("setValue");
     return null;
   });
 
-  const update = create.component(() => setValue());
+  const update = create.unit(() => setValue());
 
-  const counter = create.component(() => {
+  const counter = create.unit(() => {
     use.attach(() => console.log("counter.attach"));
     use.depend(change);
     return update();

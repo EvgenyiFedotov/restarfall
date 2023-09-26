@@ -7,7 +7,7 @@ beforeEach(() => (shape = create.shape()));
 test("check value of store", () => {
   const $count = create.store<number>(0);
 
-  const counter = create.component(() => {
+  const counter = create.unit(() => {
     const setCount = use.dispatch($count);
     setCount(7);
     return null;
@@ -21,7 +21,7 @@ test("check value of store", () => {
 test("check state of event", () => {
   const changeCount = create.event<number>();
 
-  const counter = create.component(() => {
+  const counter = create.unit(() => {
     const change = use.dispatch(changeCount);
     change(2);
     return null;
@@ -39,7 +39,7 @@ test("async check value of store", async () => {
 
   const $count = create.store<number>(0);
 
-  const counter = create.component(() => {
+  const counter = create.unit(() => {
     const setCount = use.dispatch($count);
 
     use.promise(request()).then(setCount);

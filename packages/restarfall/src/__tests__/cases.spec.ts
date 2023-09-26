@@ -9,7 +9,7 @@ test("example for usage", () => {
   const $count = create.store<number>(0);
   const inc = create.event<void>();
 
-  const counter = create.component(() => {
+  const counter = create.unit(() => {
     const incEvent = use.depend(inc);
     const count = use.value($count);
     const setCount = use.dispatch($count);
@@ -35,8 +35,8 @@ test("example for usage", () => {
   ]);
 });
 
-test("component with args", () => {
-  const counter = create.component((value: number, coef: number) => {
+test("unit with args", () => {
+  const counter = create.unit((value: number, coef: number) => {
     console.log(value * coef);
     return null;
   });
@@ -50,16 +50,16 @@ test("component with args", () => {
   expect(log.mock.calls).toEqual([[-10]]);
 });
 
-test("component with children", () => {
-  const setValue = create.component(() => {
+test("unit with children", () => {
+  const setValue = create.unit(() => {
     console.log("setValue");
     return null;
   });
-  const update = create.component(() => {
+  const update = create.unit(() => {
     console.log("update");
     return setValue();
   });
-  const counter = create.component(() => {
+  const counter = create.unit(() => {
     console.log("counter");
     return [update(), update()];
   });
@@ -86,12 +86,12 @@ test("component with children", () => {
 test("update only chidlren", () => {
   const trigger = create.event<void>();
 
-  const update = create.component((index: number) => {
+  const update = create.unit((index: number) => {
     use.depend(trigger);
     console.log("update", index);
     return null;
   });
-  const counter = create.component(() => {
+  const counter = create.unit(() => {
     console.log("counter");
     return [update(0), update(1)];
   });
@@ -120,7 +120,7 @@ test("update only chidlren", () => {
 test("payload of event by depend", () => {
   const trigger = create.event<number>();
 
-  const counter = create.component(() => {
+  const counter = create.unit(() => {
     const event = use.depend(trigger);
     console.log("counter", event);
     return null;
@@ -143,7 +143,7 @@ test("payload of event by depend", () => {
 test("filter update by depend", () => {
   const trigger = create.event<number>();
 
-  const counter = create.component(() => {
+  const counter = create.unit(() => {
     const event = use.depend(trigger, (value) => value > 2);
     console.log("counter", event.payload ?? -1);
     return null;
@@ -164,23 +164,23 @@ test("filter update by depend", () => {
   ]);
 });
 
-test("call event into component", () => {
+test("call event into unit", () => {
   const trigger = create.event<void>();
   const end = create.event<void>();
 
-  const update = create.component(() => {
+  const update = create.unit(() => {
     console.log("update");
     use.depend(trigger);
     return null;
   });
-  const load = create.component(() => {
+  const load = create.unit(() => {
     console.log("load");
     use.depend(end);
     const callTrigger = use.dispatch(trigger);
     callTrigger();
     return null;
   });
-  const counter = create.component(() => {
+  const counter = create.unit(() => {
     console.log("counter");
     return [update(), load()];
   });
@@ -206,17 +206,17 @@ test("call event into component", () => {
   ]);
 });
 
-test("change store into component", () => {
+test("change store into unit", () => {
   const $count = create.store<number>(-1);
   const end = create.event<void>();
 
-  const update = create.component(() => {
+  const update = create.unit(() => {
     const count = use.value($count);
     use.depend($count);
     console.log("update", count);
     return null;
   });
-  const load = create.component(() => {
+  const load = create.unit(() => {
     use.depend(end);
     const count = use.value($count);
     const changeCount = use.dispatch($count);
@@ -224,7 +224,7 @@ test("change store into component", () => {
     changeCount(count + 10);
     return null;
   });
-  const counter = create.component(() => {
+  const counter = create.unit(() => {
     console.log("counter");
     return [update(), load()];
   });
@@ -250,21 +250,21 @@ test("change store into component", () => {
   ]);
 });
 
-test("stable order of calling components and their children", () => {
+test("stable order of calling units and their children", () => {
   const reload = create.event<void>();
   const end = create.event<{ index: number }>();
 
-  const setValue = create.component(() => {
+  const setValue = create.unit(() => {
     console.log("setValue");
     return null;
   });
-  const update = create.component((index: number) => {
+  const update = create.unit((index: number) => {
     use.depend(reload);
     use.depend(end, (data) => data.index === index);
     console.log("update", index);
     return setValue();
   });
-  const counter = create.component(() => {
+  const counter = create.unit(() => {
     console.log("counter");
     return [update(0), update(1)];
   });
@@ -301,8 +301,8 @@ test("stable order of calling components and their children", () => {
   ]);
 });
 
-test("twice attach component", () => {
-  const counter = create.component((index: number) => {
+test("twice attach unit", () => {
+  const counter = create.unit((index: number) => {
     console.log("counter", index);
     return null;
   });
@@ -324,7 +324,7 @@ test("twice attach component", () => {
 test("use element without cache", () => {
   const change = create.event<void>();
 
-  const update = create.component(() => {
+  const update = create.unit(() => {
     use.attach(() => console.log("attach"));
     use.detach(() => console.log("detach"));
     return null;
@@ -332,7 +332,7 @@ test("use element without cache", () => {
 
   const updating = update();
 
-  const counter = create.component(() => {
+  const counter = create.unit(() => {
     use.depend(change);
     return [update(), updating];
   });

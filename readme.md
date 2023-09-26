@@ -10,7 +10,7 @@ import { create, use } from "restarfall";
 const $count = create.store<number>(0);
 const inc = create.event<void>();
 
-const counter = create.component(() => {
+const counter = create.unit(() => {
   const incEvent = use.depend(inc);
   const count = use.value($count);
   const setCount = use.dispatch($count);

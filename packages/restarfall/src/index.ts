@@ -1,6 +1,6 @@
 import { createEvent } from "./event";
 import { createStore } from "./store";
-import { createComponent } from "./component";
+import { createUnit } from "./unit";
 import { createShape } from "./shape";
 import {
   useDepend,
@@ -16,7 +16,7 @@ import {
 const create = {
   event: createEvent,
   store: createStore,
-  component: createComponent,
+  unit: createUnit,
   shape: createShape,
 };
 const use = {
@@ -35,13 +35,8 @@ export { createEvent } from "./event";
 export type { Event } from "./event";
 export { createStore } from "./store";
 export type { Store } from "./store";
-export { toChildrenElements, createComponent } from "./component";
-export type {
-  Component,
-  ComponentElement,
-  ChildrenElements,
-  DependFilter,
-} from "./component";
+export { toUnitElementArray, createUnit } from "./unit";
+export type { Unit, UnitElement, ChildrenElements, DependFilter } from "./unit";
 export { createShape } from "./shape";
 export type { Shape } from "./shape";
 export {

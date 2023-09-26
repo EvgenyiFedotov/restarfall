@@ -13,8 +13,8 @@ const $count = create.store<number>(0);
 // Create event for increase value of count
 const inc = create.event<void>();
 
-// Create component with logic for count
-const counter = create.component(() => {
+// Create unit with logic for count
+const counter = create.unit(() => {
   // Use depend from event `inc`
   const incEvent = use.depend(inc);
 
@@ -27,7 +27,7 @@ const counter = create.component(() => {
   // If the event was triggered change the value of the storage
   if (incEvent.called) setCount(count + 1);
 
-  // Return null, because `counter` doesn't have children components
+  // Return null, because `counter` doesn't have children units
   return null;
 });
 
@@ -44,7 +44,7 @@ shape.attach(counter());
 
 #### Create `store`
 
-A store is some kind of key to use between components and other third-party libraries.
+A store is some kind of key to use between units and other third-party libraries.
 
 ```ts
 import { create } from "restarfall";
@@ -54,7 +54,7 @@ const $count = create.store<number>(0);
 
 #### Create `event`
 
-An event is some kind of key to use between components and other third-party libraries.
+An event is some kind of key to use between units and other third-party libraries.
 
 ```ts
 import { create } from "restarfall";
@@ -62,64 +62,61 @@ import { create } from "restarfall";
 const inc = create.event<void>();
 ```
 
-#### Create `component`
+#### Create `unit`
 
-The component is required to create the logic of storage update and react to events correctly. The order of component call execution is preserved even after dependency updates, which makes your code predictable.
+The unit is required to create the logic of storage update and react to events correctly. The order of unit call execution is preserved even after dependency updates, which makes your code predictable.
 
 ```ts
 import { create } from "restarfall";
 
-const counter = create.component(() => null);
+const counter = create.unit(() => null);
 ```
 
-#### Create `component` with children components
+#### Create `unit` with children units
 
-You can use child components in the component body in various variations.
+You can use child units in the unit body in various variations.
 
 > [!IMPORTANT]
-> Calling a child component inside a parent component does not guarantee that the body of the child component will be called. To call the body of the child component, you must set it to the `return` of the parent component.
+> Calling a child unit inside a parent unit does not guarantee that the body of the child unit will be called. To call the body of the child unit, you must set it to the `return` of the parent unit.
 
 ```ts
 import { create } from "restarfall";
 
 // Without children
-const setValue = create.component(() => null);
+const setValue = create.unit(() => null);
 
 // With two children
-const update = create.component(() => [setValue(), setValue()]);
+const update = create.unit(() => [setValue(), setValue()]);
 
 // With one child
-const counter = create.component(() => update());
+const counter = create.unit(() => update());
 ```
 
-#### Use `arguments` for components
+#### Use `arguments` for units
 
-You can also use arguments in the component body to fine-tune your application (reusing the component for some dependency).
+You can also use arguments in the unit body to fine-tune your application (reusing the unit for some dependency).
 
 ```ts
 import { create } from "restarfall";
 
-const update = create.component((name: string, index: number) => null);
+const update = create.unit((name: string, index: number) => null);
 
-const counter = create.component(() => [
-  update("first", 0),
-  update("second", 1),
-]);
+const counter = create.unit(() => [update("first", 0), update("second", 1)]);
 ```
 
-#### Create `element` from component and use one in other components
+#### Create `element` from unit and use one in other units
 
-When a component is called, an element is created that can be used either as a child component or as a [rooted]() component.
+When a unit is called, an element is created that can be used either as a child unit or as a [rooted]() unit.
 
 ```ts
 import { create } from "restarfall";
 
-const update = create.component((name: string, index: number) => null);
+const update = create.unit((name: string, index: number) => null);
 
 const firstUpdate = update("first", 0);
 const secondUpdate = update("second", 1);
 
-const counter = create.component(() => [
+const counter = create.unit(() => [
   firstUpdate,
   secondUpdate,
   update("last", 99),
@@ -128,7 +125,7 @@ const counter = create.component(() => [
 
 #### Create `shape`
 
-A shape is a certain context relative to which the attached components will be launched. The form stores the raw data (e.g. received via ssr), storage state, data with which events were called, event listeners, and components, both root and child components, to ensure the order in which components are called.
+A shape is a certain context relative to which the attached units will be launched. The form stores the raw data (e.g. received via ssr), storage state, data with which events were called, event listeners, and units, both root and child units, to ensure the order in which units are called.
 
 ```ts
 import { create } from "restarfall";
@@ -136,27 +133,27 @@ import { create } from "restarfall";
 const shape = create.shape();
 ```
 
-#### Attach `root-component` to `shape`
+#### Attach `root-unit` to `shape`
 
-For the created components to work, they need to be attached to the shape.
+For the created units to work, they need to be attached to the shape.
 
 > [!NOTE]
-> The order of joining affects the order of calling components.
+> The order of joining affects the order of calling units.
 
 ```ts
 import { create } from "restarfall";
 
-const root = create.component(() => null);
+const root = create.unit(() => null);
 
 const shape = create.shape();
 
 shape.attach(root());
 
-// You can twice attach `root-component` to `shape`
+// You can twice attach `root-unit` to `shape`
 shape.attach(root());
 ```
 
-#### Use `value` hook into component
+#### Use `value` hook into unit
 
 This hook is essential for working with storage data .
 
@@ -165,18 +162,18 @@ import { create, use } from "restarfall";
 
 const $count = create.store<number>(0);
 
-const counter = create.component(() => {
+const counter = create.unit(() => {
   const count = use.value($store);
   return null;
 });
 ```
 
-#### Use `depend` hook into component
+#### Use `depend` hook into unit
 
-This hook is required to subscribe to a storage change or event call. When subscribing to a storage change inside the hook, it is just subscribing to an event `$store.changed`. This is why the return value signatures of this hook are the same. When an event is called, the entire body of the component will be recalled. The return values of this hook will contain an object `{ called: boolean: payload?: EventPayload }`.
+This hook is required to subscribe to a storage change or event call. When subscribing to a storage change inside the hook, it is just subscribing to an event `$store.changed`. This is why the return value signatures of this hook are the same. When an event is called, the entire body of the unit will be recalled. The return values of this hook will contain an object `{ called: boolean: payload?: EventPayload }`.
 
 > [!IMPORTANT]
-> When a component is called again, all child components are unsubscribed from their dependencies. This implementation ensures that an event occurring in the parent component will not be triggered in the child component and will not cause the child component to be called again. In addition, it is possible to enable/disable large branches of business logic under certain conditions.
+> When a unit is called again, all child units are unsubscribed from their dependencies. This implementation ensures that an event occurring in the parent unit will not be triggered in the child unit and will not cause the child unit to be called again. In addition, it is possible to enable/disable large branches of business logic under certain conditions.
 
 ```ts
 import { create, use } from "restarfall";
@@ -184,7 +181,7 @@ import { create, use } from "restarfall";
 const $count = create.store<number>(0);
 const inc = create.event<void>();
 
-const counter = create.component(() => {
+const counter = create.unit(() => {
   const countChanged = use.depend($count);
   const { called, payload } = use.depend(inc);
   return null;
@@ -198,7 +195,7 @@ import { create, use } from "restarfall";
 
 const $count = create.store<number>(0);
 
-const counter = create.component(() => {
+const counter = create.unit(() => {
   const count = use.value($count, true);
   return null;
 });
@@ -206,14 +203,14 @@ const counter = create.component(() => {
 
 #### Use `filter` for `depend` hook
 
-The filter is necessary to optimise the call to the component body.
+The filter is necessary to optimise the call to the unit body.
 
 ```ts
 import { create, use } from "restarfall";
 
 const $count = create.store<number>(0);
 
-const counter = create.component(() => {
+const counter = create.unit(() => {
   const countChangedMore2 = use.depend($count, (count) => count > 2);
   return null;
 });
@@ -228,15 +225,15 @@ import { create, use } from "restarfall";
 
 const $count = create.store<number>(0);
 
-const counter = create.component(() => {
+const counter = create.unit(() => {
   const countChanged = use.depend($count, false);
   return null;
 });
 ```
 
-#### Use `dispatch` hook into component
+#### Use `dispatch` hook into unit
 
-This hook is required to change the storage or call an event in the component body.
+This hook is required to change the storage or call an event in the unit body.
 
 ```ts
 import { create, use } from "restarfall";
@@ -244,7 +241,7 @@ import { create, use } from "restarfall";
 const $count = create.store<number>(0);
 const inc = create.event<void>();
 
-const counter = create.component(() => {
+const counter = create.unit(() => {
   const changeCount = use.dispatch($count);
   const changeByInc = use.distpach(inc);
 
@@ -255,16 +252,16 @@ const counter = create.component(() => {
 });
 ```
 
-#### Use `take` hook into component
+#### Use `take` hook into unit
 
-The data hook is needed to get the storage value when the component body context is lost, e.g. in `setTimeout`.
+The data hook is needed to get the storage value when the unit body context is lost, e.g. in `setTimeout`.
 
 ```ts
 import { create, use } from "restarfall";
 
 const $count = create.store<number>(0);
 
-const counter = create.component(() => {
+const counter = create.unit(() => {
   const takeCount = use.take($count);
   const changeCount = use.dispatch($count);
 
@@ -274,7 +271,7 @@ const counter = create.component(() => {
 });
 ```
 
-#### Use `promise` hook into component
+#### Use `promise` hook into unit
 
 This hook will come in handy if you are using `ssr`. Using it you can wait for all asynchronous processes to execute.
 
@@ -285,7 +282,7 @@ const request = async () => ({ count: 2 });
 
 const $count = create.store<number>(0);
 
-const counter = create.component(() => {
+const counter = create.unit(() => {
   const changeCount = use.dispatch($count);
 
   use.promise(request()).then(({ count }) => changeCount(count));
@@ -301,19 +298,19 @@ shape.wait().then(() => {
 });
 ```
 
-#### Use `cache` hook into component
+#### Use `cache` hook into unit
 
-This hook is required to cache any data inside the component body.
+This hook is required to cache any data inside the unit body.
 
 > [!NOTE]
-> It can help with reducing the number of attachments/ detachments of child components, because the comparison of children of the previous and current steps is used for optimisation.
+> It can help with reducing the number of attachments/ detachments of child units, because the comparison of children of the previous and current steps is used for optimisation.
 
 ```ts
 import { create, use } from "restarfall";
 
 const $count = create.store<number>(0);
 
-const counter = create.component(() => {
+const counter = create.unit(() => {
   const countCache = use.cache($count);
   const countByGet = countCache.get().value;
   const countByTake = countCache.take(() => 3);
@@ -333,7 +330,7 @@ import { create, use } from "restarfall";
 
 const $count = create.store<number>(0);
 
-const counter = create.component(() => {
+const counter = create.unit(() => {
   const countCacheFirst = use.cache($count, "first");
   const countCacheLast = use.cache($count, "last");
 
@@ -344,16 +341,16 @@ const counter = create.component(() => {
 });
 ```
 
-#### Use `detach` hook (effect) into component
+#### Use `detach` hook (effect) into unit
 
-This hook is required to detect the event of detaching a component element from the component tree.
+This hook is required to detect the event of detaching a unit element from the unit tree.
 
 ```ts
 import { create, use } from "restarfall";
 
 const $count = create.store<number>(0);
 
-const counter = create.component(() => {
+const counter = create.unit(() => {
   const setCount = use.dispatch($count);
 
   use.detach(() => setCount($count.initialValue));
@@ -362,16 +359,16 @@ const counter = create.component(() => {
 });
 ```
 
-#### Use `attach` hook (effect) into component
+#### Use `attach` hook (effect) into unit
 
-This hook is required to detect the attachment event of a component element in the component tree.
+This hook is required to detect the attachment event of a unit element in the unit tree.
 
 ```ts
 import { create, use } from "restarfall";
 
 const $count = create.store<number>(0);
 
-const counter = create.component(() => {
+const counter = create.unit(() => {
   const setCount = use.dispatch($count);
 
   use.detach(() => setCount(4));
@@ -380,12 +377,12 @@ const counter = create.component(() => {
 });
 ```
 
-#### Use `rawData` / `deserialize` / `serialize` into components and shape
+#### Use `rawData` / `deserialize` / `serialize` into units and shape
 
 These methods are necessary to implement the logic for `ssr`.
 
 > [!IMPORTANT]
-> Raw data cannot be deserialised again. For example, if there are two components that deserialise the same data, deserialisation will happen once.
+> Raw data cannot be deserialised again. For example, if there are two units that deserialise the same data, deserialisation will happen once.
 
 > [!IMPORTANT]
 > When deserialising, the value must be set correctly, otherwise you may get errors when trying to work with storage data.
@@ -396,7 +393,7 @@ import { create } from "restarfall";
 const $count = create.store<number>(0);
 const $token = create.store<string>("empty");
 
-const counter = create.component(() => null, {
+const counter = create.unit(() => null, {
   deserialize: (getValue) => ({
     count: {
       store: $count,
@@ -421,19 +418,19 @@ shape.attach(counter());
 const data = shape.serialize(); // data equal { _count_: 2, _token_: "empty" }
 ```
 
-#### Use created elements into parent component
+#### Use created elements into parent unit
 
-This technique can be used instead of caching elements inside the component body, especially if the arguments of child components do not change dynamically.
+This technique can be used instead of caching elements inside the unit body, especially if the arguments of child units do not change dynamically.
 
 ```ts
 import { create, use } from "restarfall";
 
-const update = create.component((name: string) => null);
+const update = create.unit((name: string) => null);
 
 const firstUpdate = update("first");
 const lastUpdate = update("last");
 
-const counter = create.component(() => [firstUpdate, lastUpdate]);
+const counter = create.unit(() => [firstUpdate, lastUpdate]);
 ```
 
 ### Examples
@@ -442,18 +439,18 @@ const counter = create.component(() => [firstUpdate, lastUpdate]);
 
 - [Ticker](https://codesandbox.io/s/restarfall-ticker-example-838w3t?file=/src/index.js)
 
-### Component life cycle
+### Unit life cycle
 
 ```mermaid
 flowchart LR
-  component("Create component")
+  unit("Create unit")
   element("Create element")
   instance("Create instance")
   attach("Attach instance")
   reattach("Reattach instance")
   detach("Detach instance")
 
-  component --> element
+  unit --> element
   element --> instance
   instance --> attach
   attach -.-> reattach
@@ -461,11 +458,11 @@ flowchart LR
   attach -.-> detach
 ```
 
-### Algorithm for attaching a root-component to a shape
+### Algorithm for attaching a root-unit to a shape
 
 ```mermaid
 flowchart LR
-  attach("Attach root component")
+  attach("Attach root unit")
   push("Push root to shape")
   link("Link depends")
   attachEffects("Call attach effects")
@@ -475,7 +472,7 @@ flowchart LR
   link --> attachEffects
 ```
 
-### Algorithm for updating a component after a storage change or event call
+### Algorithm for updating a unit after a storage change or event call
 
 ```mermaid
 flowchart LR
@@ -503,9 +500,9 @@ flowchart LR
 
 - [createStore](https://github.com/EvgenyiFedotov/restarfall/blob/e5f29d5f746ac4a54fbf27843e4549ea9d807c45/packages/restarfall/src/store.ts#L14-L16)
 
-### Component
+### Unit
 
-- [createComponent](https://github.com/EvgenyiFedotov/restarfall/blob/e5f29d5f746ac4a54fbf27843e4549ea9d807c45/packages/restarfall/src/component.ts#L31-L36)
+- [createUnit]()
 
 ### Hooks
 
@@ -558,7 +555,7 @@ flowchart LR
 
 - [callEvent](https://github.com/EvgenyiFedotov/restarfall/blob/ecaae9bf870361f1ed7a08bbcdd4b1888b6a8e00/packages/restarfall/src/shape.ts#L64-L67)
 
-#### Methods of components
+#### Methods of units
 
 - [attach](https://github.com/EvgenyiFedotov/restarfall/blob/ecaae9bf870361f1ed7a08bbcdd4b1888b6a8e00/packages/restarfall/src/shape.ts#L70)
 

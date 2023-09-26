@@ -10,32 +10,30 @@ type Deserialize = (
   getValue: (key: string) => { value?: unknown },
 ) => Partial<Record<string, { store: Store<unknown>; value: unknown }>>;
 
-interface ComponentElement {
-  readonly type: "component-element";
+interface UnitElement {
+  readonly type: "unit-element";
   readonly key: string | null;
-  readonly index: number;
 }
 
-interface Component<Args extends unknown[]> {
-  (...args: Args): ComponentElement;
-  type: "component";
+interface Unit<Args extends unknown[]> {
+  (...args: Args): UnitElement;
+  type: "unit";
 }
 
-type ChildElement = null | ComponentElement;
-
+type ChildElement = null | UnitElement;
 type ChildrenElements = null | ChildElement | ChildElement[];
 
-interface CreateComponentOptions {
+interface CreateUnitOptions {
   key?: string | null;
   serialize?: Serialize;
   deserialize?: Deserialize;
 }
 
-interface CreateComponent {
+interface CreateUnit {
   <Args extends unknown[]>(
     body: (...args: Args) => ChildrenElements,
-    options?: CreateComponentOptions,
-  ): Component<Args>;
+    options?: CreateUnitOptions,
+  ): Unit<Args>;
 }
 
 type DependFilter<Value> =
@@ -53,21 +51,20 @@ type AttachEffects = Set<() => void>;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Promises = Set<Promise<any>>;
 
-interface ComponentInstance {
-  type: "component-instance";
-  api: ComponentApi; // TODO Remove
-  element: ComponentElement;
+interface UnitElementInstance {
+  type: "unit-element-instance";
+  element: UnitElement;
   depends: Depends;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   cache: Cache<any>;
   detachEffects: DetachEffects;
   attachEffects: AttachEffects;
   promises: Promises;
-  children: ComponentInstance[];
-  allChidlren: ComponentInstance[];
+  children: UnitElementInstance[];
+  allChidlren: UnitElementInstance[];
 }
 
-interface ComponentApi {
+interface ShapeApi {
   getRawValue: (key: string) => { value?: unknown };
   deleteRawValue: (key: string) => void;
   getValue: <Value>(store: Store<Value>) => Value;
@@ -78,63 +75,60 @@ interface ComponentApi {
   isCalledEvent: <Value>(event: Event<Value>) => boolean;
 }
 
-type ComponentReattach = (
-  instance: ComponentInstance,
-  api: ComponentApi,
-  isAttach?: boolean,
-) => void;
+type UnitCall = (instance: UnitElementInstance, shapeApi: ShapeApi) => void;
 
-type ComponentAttach = (api: ComponentApi) => ComponentInstance;
+type UnitReattach = (instance: UnitElementInstance, shapeApi: ShapeApi) => void;
 
-const elements: WeakMap<
-  ComponentElement,
-  {
-    serialize: Serialize | null;
-    deserialize: Deserialize | null;
-    reattach: ComponentReattach;
-    attach: ComponentAttach;
-  }
-> = new WeakMap();
+type UnitAttach = (shapeApi: ShapeApi) => UnitElementInstance;
 
-const stackInstances: ComponentInstance[] = [];
+interface UnitElementApi {
+  serialize: Serialize | null;
+  deserialize: Deserialize | null;
+  reattach: UnitReattach;
+  attach: UnitAttach;
+}
 
-const toChildrenElements = (value: ChildrenElements): ChildElement[] => {
-  return value ? (Array.isArray(value) ? value : [value]) : [];
+interface UnitContext {
+  instance: UnitElementInstance;
+  shapeApi: ShapeApi;
+}
+
+const elements: WeakMap<UnitElement, UnitElementApi> = new WeakMap();
+
+let currentUnitContext: UnitContext | null = null;
+
+const toUnitElementArray = (children: ChildrenElements): ChildElement[] => {
+  return children ? (Array.isArray(children) ? children : [children]) : [];
 };
 
-const createComponent: CreateComponent = (body, options) => {
-  let index = 0;
-
-  const component: Component<Parameters<typeof body>> = (...args) => {
-    const element: ComponentElement = {
-      type: "component-element",
+const createUnit: CreateUnit = (body, options) => {
+  const unit: Unit<Parameters<typeof body>> = (...args) => {
+    const element: UnitElement = {
+      type: "unit-element",
       key: options?.key ?? null,
-      index: (index += 1),
     };
 
-    const reattach: ComponentReattach = (instance, api, isAttach = false) => {
+    const call: UnitCall = (instance, shapeApi) => {
+      const previousUnitContext = currentUnitContext;
       const children = instance.children;
-      const detachEffects = instance.detachEffects;
-      const attachEffects = instance.attachEffects;
 
       instance.depends = new Map();
-      instance.detachEffects = new Set();
-      instance.attachEffects = new Set();
       instance.promises = new Set();
       instance.children = [];
 
-      stackInstances.push(instance);
+      currentUnitContext = { instance, shapeApi };
 
-      Object.entries(options?.deserialize?.(api.getRawValue) ?? {}).forEach(
-        ([key, params]) => {
-          if (!params) return;
+      // deserialize
+      Object.entries(
+        options?.deserialize?.(shapeApi.getRawValue) ?? {},
+      ).forEach(([key, params]) => {
+        if (!params) return;
 
-          api.deleteRawValue(key);
-          api.setValue(params.store, params.value);
-        },
-      );
+        shapeApi.deleteRawValue(key);
+        shapeApi.setValue(params.store, params.value);
+      });
 
-      toChildrenElements(body(...args)).forEach((element, index) => {
+      toUnitElementArray(body(...args)).forEach((element, index) => {
         if (!element) return;
 
         const elementApi = elements.get(element);
@@ -144,26 +138,33 @@ const createComponent: CreateComponent = (body, options) => {
         if (element === children[index]?.element) {
           const child = children[index];
 
-          elementApi.reattach(child, api);
+          elementApi.reattach(child, shapeApi);
           instance.children.push(child);
           return;
         }
 
-        instance.children.push(elementApi.attach(api));
+        instance.children.push(elementApi.attach(shapeApi));
       });
 
-      if (!isAttach) {
-        instance.detachEffects = detachEffects;
-        instance.attachEffects = attachEffects;
-      }
-
-      stackInstances.pop();
+      currentUnitContext = previousUnitContext;
     };
 
-    const attach: ComponentAttach = (api) => {
-      const instance: ComponentInstance = {
-        type: "component-instance",
-        api,
+    const reattach: UnitReattach = (instance, shapeApi) => {
+      const detachEffects = instance.detachEffects;
+      const attachEffects = instance.attachEffects;
+
+      instance.detachEffects = new Set();
+      instance.attachEffects = new Set();
+
+      call(instance, shapeApi);
+
+      instance.detachEffects = detachEffects;
+      instance.attachEffects = attachEffects;
+    };
+
+    const attach: UnitAttach = (shapeApi) => {
+      const instance: UnitElementInstance = {
+        type: "unit-element-instance",
         element,
         depends: new Map(),
         cache: createCache(),
@@ -179,7 +180,7 @@ const createComponent: CreateComponent = (body, options) => {
         },
       };
 
-      reattach(instance, api, true);
+      call(instance, shapeApi);
 
       return instance;
     };
@@ -194,18 +195,19 @@ const createComponent: CreateComponent = (body, options) => {
     return element;
   };
 
-  component.type = "component";
+  unit.type = "unit";
 
-  return component;
+  return unit;
 };
 
 export type {
-  ComponentElement,
-  Component,
-  CreateComponent,
+  UnitElement,
+  Unit,
+  CreateUnit,
   ChildrenElements,
   DependFilter,
-  ComponentInstance,
-  ComponentApi,
+  UnitElementInstance,
+  ShapeApi,
+  UnitContext,
 };
-export { elements, stackInstances, toChildrenElements, createComponent };
+export { elements, currentUnitContext, toUnitElementArray, createUnit };

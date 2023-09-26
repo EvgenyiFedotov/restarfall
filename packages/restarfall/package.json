@@ -18,6 +18,7 @@
     "event",
     "store",
     "component",
+    "unit",
     "functional"
   ],
   "bugs": {

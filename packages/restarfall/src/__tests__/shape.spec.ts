@@ -18,14 +18,14 @@ test("default", () => {
 test("setRawData", () => {
   const shape = create.shape();
   const $count = create.store<number>(-1);
-  const component = create.component(() => null, {
+  const unit = create.unit(() => null, {
     deserialize: (getValue) => ({
       count: { store: $count, value: getValue("count").value },
     }),
   });
 
   shape.setRawData({ count: 2 });
-  shape.attach(component());
+  shape.attach(unit());
 
   console.log(shape.hasValue($count));
   console.log(shape.getValue($count));
@@ -40,18 +40,18 @@ test("serialize", () => {
   const shape = create.shape();
   const $count = create.store<number>(-1);
   const $token = create.store("empty");
-  const child = create.component(() => null, {
+  const child = create.unit(() => null, {
     serialize: (getValue) => ({
       count_child: getValue($count),
       token: getValue($token),
     }),
   });
-  const component = create.component(() => child(), {
+  const unit = create.unit(() => child(), {
     serialize: (getValue) => ({ count: getValue($count) }),
   });
 
   shape.setValue($count, 2);
-  shape.attach(component());
+  shape.attach(unit());
 
   console.log(shape.serialize());
 
@@ -179,11 +179,11 @@ test("callEvent void / with arg", () => {
 });
 
 test("attach", () => {
-  const left = create.component(() => {
+  const left = create.unit(() => {
     console.log("left");
     return null;
   });
-  const right = create.component(() => {
+  const right = create.unit(() => {
     console.log("right");
     return null;
   });
@@ -202,7 +202,7 @@ test("attach incorrect element", () => {
   const shape = create.shape();
 
   try {
-    shape.attach({ type: "component-element", key: "", index: 1 });
+    shape.attach({ type: "unit-element", key: "" });
   } catch {
     console.log("error");
   }

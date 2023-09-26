@@ -1,17 +1,11 @@
 import { Event } from "./event";
 import { Store } from "./store";
-import { ComponentInstance, DependFilter, stackInstances } from "./component";
+import { UnitContext, DependFilter, currentUnitContext } from "./unit";
 
-const getLastInstance = (): ComponentInstance | null => {
-  return stackInstances[stackInstances.length - 1] ?? null;
-};
+const getCurrentUnitContext = (): UnitContext => {
+  if (!currentUnitContext) throw new Error("Hook use outside unit");
 
-const getInstance = (): ComponentInstance => {
-  const instance = getLastInstance();
-
-  if (!instance) throw new Error("Hook use outside component");
-
-  return instance;
+  return currentUnitContext;
 };
 
 interface CalledEventState<Value> {
@@ -30,19 +24,19 @@ const useDepend: UseDepend = <Value>(
   unit: Event<Value> | Store<Value>,
   filter?: DependFilter<Value>,
 ): CalledEventState<Value> => {
-  const instance = getInstance();
+  const context = getCurrentUnitContext();
 
   let eventState: { payload?: Value } = {};
   let called = false;
 
   if (unit.type === "event") {
-    instance.depends.set(unit, filter);
-    eventState = instance.api.getEventState(unit);
-    called = instance.api.isCalledEvent(unit);
+    context.instance.depends.set(unit, filter);
+    eventState = context.shapeApi.getEventState(unit);
+    called = context.shapeApi.isCalledEvent(unit);
   } else {
-    instance.depends.set(unit.changed, filter);
-    eventState = instance.api.getEventState(unit.changed);
-    called = instance.api.isCalledEvent(unit.changed);
+    context.instance.depends.set(unit.changed, filter);
+    eventState = context.shapeApi.getEventState(unit.changed);
+    called = context.shapeApi.isCalledEvent(unit.changed);
   }
 
   return "payload" in eventState
@@ -58,13 +52,13 @@ interface UseDispatch {
 const useDispatch: UseDispatch = <Value>(
   unit: Event<Value> | Store<Value>,
 ): ((value?: Value) => void) => {
-  const instance = getInstance();
+  const context = getCurrentUnitContext();
 
   return (value) => {
     if (unit.type === "event") {
-      instance.api.callEvent(unit, value);
+      context.shapeApi.callEvent(unit, value);
     } else {
-      instance.api.changeValue(unit, value);
+      context.shapeApi.changeValue(unit, value);
     }
   };
 };
@@ -74,11 +68,11 @@ interface UseValue {
 }
 
 const useValue: UseValue = (store, bindDepend = false) => {
-  const instance = getInstance();
+  const context = getCurrentUnitContext();
 
   if (bindDepend) useDepend(store);
 
-  return instance.api.getValue(store);
+  return context.shapeApi.getValue(store);
 };
 
 interface UseTake {
@@ -86,9 +80,9 @@ interface UseTake {
 }
 
 const useTake: UseTake = (store) => {
-  const instance = getInstance();
+  const context = getCurrentUnitContext();
 
-  return () => instance.api.getValue(store);
+  return () => context.shapeApi.getValue(store);
 };
 
 interface UsePromise {
@@ -96,9 +90,9 @@ interface UsePromise {
 }
 
 const usePromise: UsePromise = (promise) => {
-  const instance = getInstance();
+  const context = getCurrentUnitContext();
 
-  instance.promises.add(promise);
+  context.instance.promises.add(promise);
 
   return promise;
 };
@@ -117,7 +111,7 @@ const useCache: UseCache = <Value>(
   store: Store<Value>,
   ...keys: unknown[]
 ): CacheApi<Value> => {
-  const { cache } = getInstance();
+  const { cache } = getCurrentUnitContext().instance;
 
   return {
     get: () => cache.get([store, keys]),
@@ -131,9 +125,9 @@ interface UseDetach {
 }
 
 const useDetach: UseDetach = (callback) => {
-  const instance = getInstance();
+  const context = getCurrentUnitContext();
 
-  instance.detachEffects.add(callback);
+  context.instance.detachEffects.add(callback);
 };
 
 interface UseAttach {
@@ -141,9 +135,9 @@ interface UseAttach {
 }
 
 const useAttach: UseAttach = (callback) => {
-  const instance = getInstance();
+  const context = getCurrentUnitContext();
 
-  instance.attachEffects.add(callback);
+  context.instance.attachEffects.add(callback);
 };
 
 export type {
