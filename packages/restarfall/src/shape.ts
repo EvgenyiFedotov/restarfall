@@ -205,23 +205,30 @@ const createShape: CreateShape = (parent) => {
     calledEvent = event;
     payloads.set(event, value);
 
-    const instances = roots.flatMap((instance) =>
-      [instance].concat(instance.allChidlren),
-    ); // TODO Potential place for optimization
-    const dependListeners: EventListener<unknown>[] = [];
+    const instances = roots.reduce<Map<UnitElementInstance, number>>(
+      (memo, rootInstance) => {
+        memo.set(rootInstance, memo.size);
+        rootInstance.allChidlren.forEach((childIntance) => {
+          memo.set(childIntance, memo.size);
+        });
+        return memo;
+      },
+      new Map(),
+    );
+
+    const dependListeners: Record<number, EventListener<unknown>> = {};
     const outsideListeners: EventListener<unknown>[] = [];
 
     Array.from(events.get(event) ?? []).forEach((listener) => {
       const instance = listeners.get(listener);
 
-      if (instance) {
-        dependListeners[instances.indexOf(instance)] = listener;
-      } else {
-        outsideListeners.push(listener);
-      }
+      if (instance) dependListeners[instances.get(instance) ?? -1] = listener;
+      else outsideListeners.push(listener);
     });
 
-    for (const listener of dependListeners) {
+    for (const key in dependListeners) {
+      const listener = dependListeners[key];
+
       if (events.get(event)?.has(listener)) listener(value, prev);
     }
 
