@@ -428,8 +428,11 @@ const counter = create.unit(() => [firstUpdate, lastUpdate]);
 
 ### Unit life cycle
 
+<details>
+  <summary>Chart</summary>
+
 ```mermaid
-flowchart LR
+flowchart TB
   unit("Create unit")
   element("Create element")
   instance("Create instance")
@@ -445,10 +448,15 @@ flowchart LR
   attach -.-> detach
 ```
 
+</details>
+
 ### Algorithm for attaching a root-unit to a shape
 
+<details>
+  <summary>Chart</summary>
+
 ```mermaid
-flowchart LR
+flowchart TB
   attach("Attach root unit")
   push("Push root to shape")
   link("Link depends")
@@ -459,10 +467,15 @@ flowchart LR
   link --> attachEffects
 ```
 
+</details>
+
 ### Algorithm for updating a unit after a storage change or event call
 
+<details>
+  <summary>Chart</summary>
+
 ```mermaid
-flowchart LR
+flowchart TB
   filterDepend("Filter depend")
   unlink("Unlink depends")
   reattach("Reattach current instance")
@@ -476,6 +489,29 @@ flowchart LR
   link --> detachEffects
   detachEffects --> attachEffects
 ```
+
+</details>
+
+### Algorithm of event call
+
+<details>
+  <summary>Chart</summary>
+
+```mermaid
+flowchart TB
+  updatePayload("Update payload event")
+  buildIndexes("Build indexes of instances")
+  buildListener("Build listeners by owner")
+  callListenersOfInstances("Call listeners of instances")
+  callListenersOfOutside("Call listeners of outside")
+
+  updatePayload --> buildIndexes
+  buildIndexes --> buildListener
+  buildListener --> callListenersOfInstances
+  callListenersOfInstances --> callListenersOfOutside
+```
+
+</details>
 
 ## API
 
