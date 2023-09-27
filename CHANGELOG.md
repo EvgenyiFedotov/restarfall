@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.2.0](https://github.com/EvgenyiFedotov/restarfall/compare/v0.1.15...v0.2.0) (2023-09-27)
+
+
+### ⚠ BREAKING CHANGES
+
+* **restarfall:** remove bindDepend for useValue
+* rename component to unit
+
+* rename component to unit ([b56c6d5](https://github.com/EvgenyiFedotov/restarfall/commit/b56c6d59f183ca53faa512a8b5973f66f8cc3f21))
+* **restarfall:** remove bindDepend for useValue ([9367f84](https://github.com/EvgenyiFedotov/restarfall/commit/9367f843956ecbb556417427c58b6f65767fd8ce))
+
 ### [0.1.15](https://github.com/EvgenyiFedotov/restarfall/compare/v0.1.14...v0.1.15) (2023-09-25)
 
 
