@@ -143,6 +143,7 @@ export type {
   UseValue,
   UseTake,
   UsePromise,
+  CacheApi,
   UseCache,
   UseDetach,
   UseAttach,

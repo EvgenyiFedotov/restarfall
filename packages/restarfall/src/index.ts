@@ -45,6 +45,7 @@ export {
   useValue,
   useTake,
   usePromise,
+  CacheApi,
   useCache,
   useDetach,
   useAttach,

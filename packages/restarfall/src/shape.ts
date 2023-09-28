@@ -323,14 +323,35 @@ const createShape: CreateShape = (parent) => {
     });
   };
   const wait: ShapeWait = async () => {
-    await Promise.allSettled(
-      roots.flatMap((rootInstance) => [
+    const getPromises = () => {
+      return roots.flatMap((rootInstance) => [
         ...Array.from(rootInstance.promises),
         ...rootInstance.allChidlren.flatMap((child) =>
           Array.from(child.promises),
         ),
-      ]),
+      ]);
+    };
+    const promises: {
+      prev: Set<Promise<unknown>>;
+      curr: Promise<unknown>[];
+      diff: Promise<unknown>[];
+    } = {
+      prev: new Set(),
+      curr: getPromises(),
+      diff: [],
+    };
+    promises.diff = promises.curr.filter(
+      (promise) => !promises.prev.has(promise),
     );
+
+    while (promises.diff.length > 0) {
+      await Promise.allSettled(promises.diff);
+      promises.prev = new Set(promises.curr);
+      promises.curr = getPromises();
+      promises.diff = promises.curr.filter(
+        (promise) => !promises.prev.has(promise),
+      );
+    }
   };
 
   // Shape

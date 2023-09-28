@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-import { UnitElement, create, use } from "../index";
+import { Unit, UnitElement, create, use } from "../index";
 
 const log = jest.fn();
 global.console = { ...console, log };
@@ -159,6 +159,53 @@ test("usePromise", async () => {
 
   await shape.wait();
   expect(log.mock.calls).toEqual([[2], [2]]);
+});
+
+test("usePromise [deep]", async () => {
+  const request = (value: number) => {
+    return new Promise<number>((resolve) =>
+      setTimeout(() => resolve(value), 200),
+    );
+  };
+
+  const $unit = create.store<Unit<[]> | null>(null);
+
+  const update = create.unit(() => {
+    use.promise(request(20)).then(console.log);
+    use.promise(request(30)).then(console.log);
+    request(40).then(console.log);
+    return null;
+  });
+
+  const launchUpdate = create.unit(() => {
+    use.depend($unit);
+
+    const unit = use.value($unit);
+    return unit ? unit() : null;
+  });
+
+  const counter = create.unit(() => {
+    const setUnit = use.dispatch($unit);
+
+    use.promise(request(10)).then((value) => {
+      console.log(value);
+      setUnit(update);
+    });
+
+    return [launchUpdate()];
+  });
+
+  const shape = create.shape();
+
+  shape.attach(counter());
+  await shape.wait();
+
+  // -> 10
+  // -> 20
+  // -> 30
+
+  expect(log.mock.calls).toHaveLength(3);
+  expect(log.mock.calls).toEqual([[10], [20], [30]]);
 });
 
 test("useCache", () => {
