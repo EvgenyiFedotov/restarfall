@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.2.1](https://github.com/EvgenyiFedotov/restarfall/compare/v0.2.0...v0.2.1) (2023-09-28)
+
+
+### Bug Fixes
+
+* **restarfall:** deep waiting of promises in shape ([9a18509](https://github.com/EvgenyiFedotov/restarfall/commit/9a185093dad310d92aecd85af5550c4783eee5ec))
+
 ## [0.2.0](https://github.com/EvgenyiFedotov/restarfall/compare/v0.1.15...v0.2.0) (2023-09-27)
 
 
