@@ -426,6 +426,14 @@ const counter = create.unit(() => [firstUpdate, lastUpdate]);
 
 - [Ticker](https://codesandbox.io/s/restarfall-ticker-example-838w3t?file=/src/index.js)
 
+- [Validate field](https://codesandbox.io/s/restarfall-validate-field-5vv6jp?file=/src/model.js)
+
+- [Auth form](https://codesandbox.io/s/restarfall-auth-form-vytkr2?file=/src/model-auth.js)
+
+- [Toggler](https://codesandbox.io/s/restarfall-toggler-j2dqk8?file=/src/model.ts)
+
+- [SetRawData / Deserialize / Serialize](https://codesandbox.io/s/restarfall-setrawdata-deserialize-serialize-mvzf89?file=/src/index.js)
+
 ### Unit life cycle
 
 <details>
@@ -525,7 +533,7 @@ flowchart TB
 
 ### Unit
 
-- [createUnit]()
+- [createUnit](https://github.com/EvgenyiFedotov/restarfall/blob/82fcf6fd4f4e86803d8ae7c7238f7138368a8a26/packages/restarfall/src/unit.ts#L32-L37)
 
 ### Hooks
 
