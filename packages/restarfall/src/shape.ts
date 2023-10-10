@@ -2,6 +2,7 @@ import {
   UnitElement,
   UnitElementInstance,
   DependFilter,
+  ShapeApi,
   elements,
 } from "./unit";
 import { Event } from "./event";
@@ -28,6 +29,7 @@ type ShapeEvents = Map<Event<unknown>, Set<EventListener<any>>>;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type ShapePayloads = Map<Event<unknown>, any>;
 type ShapeCalledEvent = Event<unknown> | null;
+type ShapeQueueEventCalls = [Event<unknown>, unknown][];
 
 // State [Units]
 type ShapeRoots = UnitElementInstance[];
@@ -62,6 +64,10 @@ type ShapeListenEvent = <Value>(
   listener: EventListener<Value>,
 ) => () => void;
 interface ShapeCallEvent {
+  <Value>(event: Event<Value>, value: Value): void;
+  (event: Event<void>): void;
+}
+interface ShapePushEventCall {
   <Value>(event: Event<Value>, value: Value): void;
   (event: Event<void>): void;
 }
@@ -116,6 +122,7 @@ const createShape: CreateShape = (parent) => {
   const listeners: ShapeListeners = new Map();
   const events: ShapeEvents = new Map();
   const payloads: ShapePayloads = new Map();
+  const queueEventCalls: ShapeQueueEventCalls = [];
   let calledEvent: ShapeCalledEvent = null;
   const roots: ShapeRoots = [];
 
@@ -238,12 +245,15 @@ const createShape: CreateShape = (parent) => {
 
     calledEvent = prevCalledEvent;
   }) as ShapeCallEvent;
+  const pushEventCall: ShapePushEventCall = ((event, value) => {
+    queueEventCalls.push([event, value]);
+  }) as ShapePushEventCall;
   const attach: ShapeAttach = (element) => {
     const methods = elements.get(element);
 
     if (!methods) throw new Error("Incorrect element for attach to shape.");
 
-    const rootInstance = methods.attach({
+    const shapeApi: ShapeApi = {
       getRawValue,
       deleteRawValue,
       getValue,
@@ -251,9 +261,11 @@ const createShape: CreateShape = (parent) => {
       changeValue,
       getEventState,
       isCalledEvent,
-      callEvent,
-    });
+      callEvent: pushEventCall,
+    };
+    const rootInstance = methods.attach(shapeApi);
 
+    shapeApi.callEvent = callEvent;
     roots.push(rootInstance);
 
     const createListen =
@@ -273,16 +285,9 @@ const createShape: CreateShape = (parent) => {
           });
 
           // reattach
-          elements.get(instance.element)?.reattach(instance, {
-            getRawValue,
-            deleteRawValue,
-            getValue,
-            setValue,
-            changeValue,
-            getEventState,
-            isCalledEvent,
-            callEvent,
-          });
+          shapeApi.callEvent = pushEventCall;
+          elements.get(instance.element)?.reattach(instance, shapeApi);
+          shapeApi.callEvent = callEvent;
 
           const currAllChildren = new Set(instance.allChidlren);
 
@@ -305,6 +310,14 @@ const createShape: CreateShape = (parent) => {
               childInstance.attachEffects.forEach((effect) => effect());
             }
           });
+
+          // call events from queue
+          const listEventCalls = [...queueEventCalls];
+
+          queueEventCalls.length = 0;
+          listEventCalls.forEach(([event, payload]) =>
+            callEvent(event, payload),
+          );
         };
 
         linkInstance(instance, event, listener);
@@ -321,6 +334,12 @@ const createShape: CreateShape = (parent) => {
     rootInstance.allChidlren.forEach((childInstance) => {
       childInstance.attachEffects.forEach((effect) => effect());
     });
+
+    // call events from queue
+    const listEventCalls = [...queueEventCalls];
+
+    queueEventCalls.length = 0;
+    listEventCalls.forEach(([event, payload]) => callEvent(event, payload));
   };
   const wait: ShapeWait = async () => {
     const getPromises = () => {

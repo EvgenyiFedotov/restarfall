@@ -178,6 +178,7 @@ test("call event into unit", () => {
     use.depend(end);
     const callTrigger = use.dispatch(trigger);
     callTrigger();
+    callTrigger();
     return null;
   });
   const counter = create.unit(() => {
@@ -193,15 +194,21 @@ test("call event into unit", () => {
   // -> "counter"
   // -> "update"
   // -> "load"
+  // -> "update"
+  // -> "update"
   // -> "load"
   // -> "update"
+  // -> "update"
 
-  expect(log.mock.calls).toHaveLength(5);
+  expect(log.mock.calls).toHaveLength(8);
   expect(log.mock.calls).toEqual([
     ["counter"],
     ["update"],
     ["load"],
+    ["update"],
+    ["update"],
     ["load"],
+    ["update"],
     ["update"],
   ]);
 });
@@ -352,5 +359,76 @@ test("use element without cache", () => {
     ["attach"],
     ["detach"],
     ["attach"],
+  ]);
+});
+
+test("call event into unit with effects", () => {
+  const changeEvent = create.event<void>();
+  const updateEvent = create.event<void>();
+  const resetEvent = create.event<void>();
+
+  const change = create.unit(() => {
+    console.log("change");
+    use.depend(changeEvent);
+    return null;
+  });
+
+  const update = create.unit(() => {
+    console.log("update");
+    use.depend(updateEvent);
+    use.attach(() => console.log("update.attach"));
+    use.detach(() => console.log("update.detach"));
+    use.dispatch(changeEvent)();
+    return null;
+  });
+
+  const counter = create.unit(() => {
+    console.log("counter");
+    use.depend(resetEvent);
+    use.dispatch(updateEvent)();
+    return [change(), update()];
+  });
+
+  const shape = create.shape();
+
+  shape.attach(counter());
+  shape.callEvent(resetEvent);
+
+  // -> "counter"
+  // -> "change"
+  // -> "update"
+  // -> "update.attach"
+  // -> "update"
+  // -> "change"
+  // -> "change"
+
+  // shape.callEvent(resetEvent);
+
+  // -> "counter"
+  // -> "change"
+  // -> "update"
+  // -> "update.detach"
+  // -> "update.attach"
+  // -> "update"
+  // -> "change"
+  // -> "change"
+
+  expect(log.mock.calls).toHaveLength(7 + 8);
+  expect(log.mock.calls).toEqual([
+    ["counter"],
+    ["change"],
+    ["update"],
+    ["update.attach"],
+    ["update"],
+    ["change"],
+    ["change"],
+    ["counter"],
+    ["change"],
+    ["update"],
+    ["update.detach"],
+    ["update.attach"],
+    ["update"],
+    ["change"],
+    ["change"],
   ]);
 });
