@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.2.2](https://github.com/EvgenyiFedotov/restarfall/compare/v0.2.1...v0.2.2) (2023-10-10)
+
+
+### Features
+
+* **restarfall:** add queue event calls ([5280f96](https://github.com/EvgenyiFedotov/restarfall/commit/5280f968edde5cb370ca1a5a4d46cbc3634ab122))
+
 ### [0.2.1](https://github.com/EvgenyiFedotov/restarfall/compare/v0.2.0...v0.2.1) (2023-09-28)
 
 
