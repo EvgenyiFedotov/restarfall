@@ -27,6 +27,13 @@
   "homepage": "https://github.com/EvgenyiFedotov/restarfall#readme",
   "exports": {
     ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/cjs/index.js",
+      "require": "./dist/mjs/index.js",
+      "default": "./dist/cjs/index.js"
+    },
+    "./utils": {
+      "types": "./dist/types/index.d.ts",
       "import": "./dist/cjs/index.js",
       "require": "./dist/mjs/index.js",
       "default": "./dist/cjs/index.js"

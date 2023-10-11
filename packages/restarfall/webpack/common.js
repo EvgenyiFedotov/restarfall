@@ -31,6 +31,7 @@ const common = {
 const cjs = {
   entry: {
     index: path.resolve(process.cwd(), "./src/index.ts"),
+    uitls: path.resolve(process.cwd(), "./src/utils/index.ts"),
   },
   output: {
     libraryTarget: "commonjs2",
@@ -45,6 +46,7 @@ const mjs = {
   },
   entry: {
     index: path.resolve(process.cwd(), "./src/index.ts"),
+    uitls: path.resolve(process.cwd(), "./src/utils/index.ts"),
   },
   output: {
     path: path.resolve(process.cwd(), "./dist/mjs"),
