@@ -18,9 +18,9 @@ const common = {
             },
           },
           {
-            loader: "ts-loader",
+            loader: require.resolve("ts-loader"),
             options: {
-              configFile: "../tsconfig.json",
+              configFile: path.resolve(__dirname, "../tsconfig.json"),
             },
           },
         ],
