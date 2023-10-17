@@ -1,6 +1,6 @@
 {
   "name": "restarfall-ext",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "license": "MIT",
   "author": "Evgenii Fedotov",
   "description": "Restarfall-utils is a JavaScript library utils for restarfall library.",

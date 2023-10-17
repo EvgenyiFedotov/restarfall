@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.2.5](https://github.com/EvgenyiFedotov/restarfall/compare/v0.2.4...v0.2.5) (2023-10-17)
+
+
+### Features
+
+* **restrafall-ext:** add bindEvent, combineEvents, linkEvent ([1b42d79](https://github.com/EvgenyiFedotov/restarfall/commit/1b42d79eae1cc89ba2f11ae23830ad32edbf3ab8))
+
 ### [0.2.4](https://github.com/EvgenyiFedotov/restarfall/compare/v0.2.3...v0.2.4) (2023-10-11)
 
 ### [0.2.3](https://github.com/EvgenyiFedotov/restarfall/compare/v0.2.2...v0.2.3) (2023-10-11)
