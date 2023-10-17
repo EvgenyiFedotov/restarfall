@@ -1,10 +1,13 @@
 {
-  "name": "restarfall",
+  "name": "restarfall-ext",
+  "version": "0.2.4",
   "license": "MIT",
   "author": "Evgenii Fedotov",
-  "version": "0.2.4",
-  "description": "Restarfall is a JavaScript library for creating business logic and data management.",
+  "description": "Restarfall-utils is a JavaScript library utils for restarfall library.",
   "keywords": [
+    "react",
+    "hooks",
+    "context",
     "business",
     "logic",
     "data",
@@ -19,7 +22,8 @@
     "store",
     "component",
     "unit",
-    "functional"
+    "functional",
+    "utils"
   ],
   "bugs": {
     "url": "https://github.com/EvgenyiFedotov/restarfall/issues"
@@ -27,7 +31,6 @@
   "homepage": "https://github.com/EvgenyiFedotov/restarfall#readme",
   "exports": {
     ".": {
-      "types": "./dist/types/index.d.ts",
       "import": "./dist/cjs/index.js",
       "require": "./dist/mjs/index.js",
       "default": "./dist/cjs/index.js"
@@ -43,5 +46,8 @@
     "test": "jest",
     "build": "rm -fr ./dist && webpack -c ./webpack/prod.js ",
     "start": "rm -fr ./dist && webpack -c ./webpack/dev.js --watch"
+  },
+  "peerDependencies": {
+    "restarfall": "file:../restarfall"
   }
 }

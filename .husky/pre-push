@@ -14,3 +14,9 @@ npm ci
 npm run test
 npm run build
 cd ../..
+
+cd ./packages/restarfall-ext
+npm ci
+npm run test
+npm run build
+cd ../..
