@@ -13,3 +13,8 @@ cd ./packages/restarfall-react
 npm i
 git add ./package-lock.json
 cd ../..
+
+cd ./packages/restarfall-ext
+npm i
+git add ./package-lock.json
+cd ../..
