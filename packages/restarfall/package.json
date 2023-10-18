@@ -28,8 +28,8 @@
   "exports": {
     ".": {
       "types": "./dist/types/index.d.ts",
-      "import": "./dist/cjs/index.js",
-      "require": "./dist/mjs/index.js",
+      "import": "./dist/mjs/index.js",
+      "require": "./dist/cjs/index.js",
       "default": "./dist/cjs/index.js"
     }
   },
