@@ -23,7 +23,12 @@ const Provider = memo<PropsWithChildren<{ shape: Shape }>>((props) => {
   );
 });
 
-const useCall = <Value,>(event: Event<Value>): Dispatch<Value> => {
+interface UseCall {
+  <Value>(event: Event<Value>): Dispatch<Value>;
+  (event: Event<void>): Dispatch<void>;
+}
+
+const useCall: UseCall = <Value,>(event: Event<Value>): Dispatch<Value> => {
   const shape = useContext(context);
   return useCallback(
     (value) => {
@@ -33,7 +38,12 @@ const useCall = <Value,>(event: Event<Value>): Dispatch<Value> => {
   );
 };
 
-const useChange = <Value,>(store: Store<Value>): Dispatch<Value> => {
+interface UseChange {
+  <Value>(store: Store<Value>): Dispatch<Value>;
+  (store: Store<void>): Dispatch<void>;
+}
+
+const useChange: UseChange = <Value,>(store: Store<Value>): Dispatch<Value> => {
   const shape = useContext(context);
   const dispatch: Dispatch<Value> = useCallback(
     (value) => {
@@ -45,7 +55,12 @@ const useChange = <Value,>(store: Store<Value>): Dispatch<Value> => {
   return dispatch;
 };
 
-const useEvent = <Value,>(
+interface UseEvent {
+  <Value>(event: Event<Value>): [EventState<Value>, Dispatch<Value>];
+  (event: Event<void>): [EventState<void>, Dispatch<void>];
+}
+
+const useEvent: UseEvent = <Value,>(
   event: Event<Value>,
 ): [EventState<Value>, Dispatch<Value>] => {
   const shape = useContext(context);
@@ -62,7 +77,14 @@ const useEvent = <Value,>(
   return [value, dispatch];
 };
 
-const useStore = <Value,>(store: Store<Value>): [Value, Dispatch<Value>] => {
+interface UseStore {
+  <Value>(store: Store<Value>): [Value, Dispatch<Value>];
+  (store: Store<void>): [void, Dispatch<void>];
+}
+
+const useStore: UseStore = <Value,>(
+  store: Store<Value>,
+): [Value, Dispatch<Value>] => {
   const shape = useContext(context);
   const [value, setValue] = useState<Value>(shape.getValue(store));
   const dispatch = useChange(store);
@@ -72,5 +94,5 @@ const useStore = <Value,>(store: Store<Value>): [Value, Dispatch<Value>] => {
   return [value, dispatch];
 };
 
-export type { EventState };
+export type { EventState, UseCall, UseChange, UseEvent, UseStore };
 export { Provider, useCall, useChange, useEvent, useStore };

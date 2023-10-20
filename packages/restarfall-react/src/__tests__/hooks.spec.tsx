@@ -2,7 +2,7 @@ import React from "react";
 import { render, act, fireEvent } from "@testing-library/react";
 import { create } from "restarfall";
 
-import { Provider, useEvent, useStore } from "../hooks";
+import { Provider, useCall, useEvent, useStore } from "../hooks";
 
 const $store = create.store<string>("");
 const event = create.event<string>();
@@ -108,4 +108,31 @@ test("call event", () => {
 
   fireEvent.change(input, { target: { value: "VALUE_CHANGED" } });
   expect(input.value).toBe("VALUE_CHANGED");
+});
+
+test("call event without payload", () => {
+  const okEvent = create.event<void>();
+
+  const Component = () => {
+    const callOkEvent = useCall(okEvent);
+
+    return <button onClick={callOkEvent}>ok</button>;
+  };
+
+  const renderResult = render(
+    <Provider shape={shape}>
+      <Component />
+    </Provider>,
+  );
+
+  const button =
+    renderResult.container.querySelector("button") ??
+    document.createElement("button");
+
+  const listener = jest.fn();
+
+  shape.listenEvent(okEvent, listener);
+  fireEvent.click(button);
+
+  expect(listener.mock.calls).toHaveLength(1);
 });
