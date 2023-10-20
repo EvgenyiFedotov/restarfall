@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.2.8](https://github.com/EvgenyiFedotov/restarfall/compare/v0.2.7...v0.2.8) (2023-10-20)
+
+
+### Bug Fixes
+
+* **restarfall-react:** types of hooks ([f011ad8](https://github.com/EvgenyiFedotov/restarfall/commit/f011ad8439095a538661fc2e15be399e9afb3db5))
+
 ### [0.2.7](https://github.com/EvgenyiFedotov/restarfall/compare/v0.2.6...v0.2.7) (2023-10-20)
 
 
