@@ -9,7 +9,7 @@ import React, {
 } from "react";
 import { Shape, createShape, Event, Store } from "restarfall";
 
-type Dispatch<Value> = (value: Value extends void ? never : Value) => void;
+type Dispatch<Value> = Value extends void ? () => void : (value: Value) => void;
 
 interface EventState<Value> {
   payload?: Value;
@@ -28,10 +28,11 @@ interface UseCall {
   (event: Event<void>): Dispatch<void>;
 }
 
-const useCall: UseCall = <Value,>(event: Event<Value>): Dispatch<Value> => {
+const useCall: UseCall = (event: Event<unknown>) => {
   const shape = useContext(context);
+
   return useCallback(
-    (value) => {
+    (value?: unknown) => {
       shape.callEvent(event, value);
     },
     [shape, event],
@@ -43,16 +44,15 @@ interface UseChange {
   (store: Store<void>): Dispatch<void>;
 }
 
-const useChange: UseChange = <Value,>(store: Store<Value>): Dispatch<Value> => {
+const useChange: UseChange = (store: Store<unknown>) => {
   const shape = useContext(context);
-  const dispatch: Dispatch<Value> = useCallback(
-    (value) => {
+
+  return useCallback(
+    (value?: unknown) => {
       shape.changeValue(store, value);
     },
     [shape, store],
   );
-
-  return dispatch;
 };
 
 interface UseEvent {
@@ -60,9 +60,7 @@ interface UseEvent {
   (event: Event<void>): [EventState<void>, Dispatch<void>];
 }
 
-const useEvent: UseEvent = <Value,>(
-  event: Event<Value>,
-): [EventState<Value>, Dispatch<Value>] => {
+const useEvent: UseEvent = <Value,>(event: Event<Value>) => {
   const shape = useContext(context);
   const [value, setValue] = useState<EventState<Value>>(
     shape.getEventState(event),
@@ -74,7 +72,7 @@ const useEvent: UseEvent = <Value,>(
     [shape, event],
   );
 
-  return [value, dispatch];
+  return [value, dispatch] as never;
 };
 
 interface UseStore {
@@ -82,16 +80,14 @@ interface UseStore {
   (store: Store<void>): [void, Dispatch<void>];
 }
 
-const useStore: UseStore = <Value,>(
-  store: Store<Value>,
-): [Value, Dispatch<Value>] => {
+const useStore: UseStore = <Value,>(store: Store<Value>) => {
   const shape = useContext(context);
   const [value, setValue] = useState<Value>(shape.getValue(store));
   const dispatch = useChange(store);
 
   useEffect(() => shape.listenEvent(store.changed, setValue), [shape, store]);
 
-  return [value, dispatch];
+  return [value, dispatch] as never;
 };
 
 export type { EventState, UseCall, UseChange, UseEvent, UseStore };
