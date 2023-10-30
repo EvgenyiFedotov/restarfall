@@ -9,7 +9,7 @@
     "update-depends": "node ./scripts/update-depends.js",
     "pre-release": "standard-version --prerelease",
     "prerelease": "./scripts/prerelease",
-    "release": "standard-version"
+    "release": "standard-version && git add -A"
   },
   "devDependencies": {
     "@babel/core": "^7.19.0",
