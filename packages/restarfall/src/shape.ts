@@ -45,6 +45,7 @@ type ShapeHasValue = <Value>(store: Store<Value>) => boolean;
 type ShapeGetValue = <Value>(store: Store<Value>) => Value;
 type ShapeSetValue = <Value>(store: Store<Value>, value: Value) => void;
 type ShapeChangeValue = <Value>(store: Store<Value>, value: Value) => void;
+type ShapePushValueChange = <Value>(store: Store<Value>, value: Value) => void;
 
 // Methods [Events]
 type ShapeLinkInstance = <Value>(
@@ -248,6 +249,14 @@ const createShape: CreateShape = (parent) => {
   const pushEventCall: ShapePushEventCall = ((event, value) => {
     queueEventCalls.push([event, value]);
   }) as ShapePushEventCall;
+  const pushValueChange: ShapePushValueChange = ((store, value) => {
+    const prevValue = getValue(store);
+
+    if (prevValue === value) return;
+
+    setValue(store, value);
+    pushEventCall(store.changed, value);
+  }) as ShapePushValueChange;
   const attach: ShapeAttach = (element) => {
     const methods = elements.get(element);
 
@@ -258,14 +267,15 @@ const createShape: CreateShape = (parent) => {
       deleteRawValue,
       getValue,
       setValue,
-      changeValue,
       getEventState,
       isCalledEvent,
       callEvent: pushEventCall,
+      changeValue: pushValueChange,
     };
     const rootInstance = methods.attach(shapeApi);
 
     shapeApi.callEvent = callEvent;
+    shapeApi.changeValue = changeValue;
     roots.push(rootInstance);
 
     const createListen =
@@ -286,8 +296,10 @@ const createShape: CreateShape = (parent) => {
 
           // reattach
           shapeApi.callEvent = pushEventCall;
+          shapeApi.changeValue = pushValueChange;
           elements.get(instance.element)?.reattach(instance, shapeApi);
           shapeApi.callEvent = callEvent;
+          shapeApi.changeValue = changeValue;
 
           const currAllChildren = new Set(instance.allChidlren);
 

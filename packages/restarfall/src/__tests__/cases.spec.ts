@@ -244,14 +244,16 @@ test("change store into unit", () => {
   // -> "counter"
   // -> "update" -1
   // -> "load" -1
+  // -> "update" 9
   // -> "load" 9
   // -> "update" 19
 
-  expect(log.mock.calls).toHaveLength(5);
+  expect(log.mock.calls).toHaveLength(6);
   expect(log.mock.calls).toEqual([
     ["counter"],
     ["update", -1],
     ["load", -1],
+    ["update", 9],
     ["load", 9],
     ["update", 19],
   ]);
@@ -430,5 +432,43 @@ test("call event into unit with effects", () => {
     ["update"],
     ["change"],
     ["change"],
+  ]);
+});
+
+test("change store into unit [more simple case]", () => {
+  const $count = create.store<number>(0);
+
+  const updated = create.unit(() => {
+    console.log("updated", use.value($count));
+    use.depend($count);
+    return null;
+  });
+
+  const change = create.unit(() => {
+    console.log("change");
+    use.dispatch($count)(2);
+    return null;
+  });
+
+  const counter = create.unit(() => {
+    console.log("counter");
+    return [updated(), change()];
+  });
+
+  const shape = create.shape();
+
+  shape.attach(counter());
+
+  // -> "counter"
+  // -> "updated" 0
+  // -> "change"
+  // -> "updated" 2
+
+  expect(log.mock.calls).toHaveLength(4);
+  expect(log.mock.calls).toEqual([
+    ["counter"],
+    ["updated", 0],
+    ["change"],
+    ["updated", 2],
   ]);
 });
