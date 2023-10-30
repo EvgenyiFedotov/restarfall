@@ -1,6 +1,6 @@
 {
   "name": "restarfall-react",
-  "version": "0.2.8",
+  "version": "0.2.9",
   "license": "MIT",
   "author": "Evgenii Fedotov",
   "description": "Restarfall-react is a JavaScript library for connect restarfall and react.",
