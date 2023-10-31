@@ -7,7 +7,7 @@ import React, {
   useEffect,
   useState,
 } from "react";
-import { Shape, createShape, Event, Store } from "restarfall";
+import { Shape, create, Event, Store } from "restarfall";
 
 type Dispatch<Value> = Value extends void ? () => void : (value: Value) => void;
 
@@ -15,7 +15,7 @@ interface EventState<Value> {
   payload?: Value;
 }
 
-const context = createContext<Shape>(createShape());
+const context = createContext<Shape>(create.shape());
 
 const Provider = memo<PropsWithChildren<{ shape: Shape }>>((props) => {
   return (

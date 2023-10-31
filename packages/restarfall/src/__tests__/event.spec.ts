@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-import { createEvent } from "../index";
+import { createEvent } from "../event";
 
 const log = jest.fn();
 global.console = { ...console, log };

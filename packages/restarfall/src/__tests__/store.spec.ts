@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-import { createStore } from "../index";
+import { createStore } from "../store";
 
 const log = jest.fn();
 global.console = { ...console, log };
