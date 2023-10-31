@@ -12,12 +12,14 @@ import {
   useDetach,
   useAttach,
 } from "./hooks";
+import { createLogger } from "./public-logger";
 
 const create = {
   event: createEvent,
   store: createStore,
   unit: createUnit,
   shape: createShape,
+  logger: createLogger,
 };
 const use = {
   depend: useDepend,
@@ -31,22 +33,10 @@ const use = {
 };
 
 export { create, use };
-export { createEvent } from "./event";
+export { toUnitElementArray } from "./unit";
+
 export type { Event } from "./event";
-export { createStore } from "./store";
 export type { Store } from "./store";
-export { toUnitElementArray, createUnit } from "./unit";
 export type { Unit, UnitElement, ChildrenElements, DependFilter } from "./unit";
-export { createShape } from "./shape";
 export type { Shape } from "./shape";
-export {
-  useDepend,
-  useDispatch,
-  useValue,
-  useTake,
-  usePromise,
-  CacheApi,
-  useCache,
-  useDetach,
-  useAttach,
-} from "./hooks";
+export type { LogEvent, Logger } from "./public-logger";

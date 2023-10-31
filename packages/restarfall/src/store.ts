@@ -1,4 +1,5 @@
 import { Event, createEvent } from "./event";
+import { privateLogger } from "./private-root";
 
 interface Store<Value> {
   readonly type: "store";
@@ -15,10 +16,15 @@ interface CreateStore {
   <Value>(value: Value, options?: CreateStoreOptions): Store<Value>;
 }
 
-const createStore: CreateStore = (value, options) => {
-  let changed: Event<typeof value> | null = null;
+const stores: WeakSet<Store<unknown>> = new WeakSet();
 
-  return {
+const createStore: CreateStore = <Value>(
+  value: Value,
+  options?: CreateStoreOptions,
+) => {
+  let changed: Event<Value> | null = null;
+
+  const store: Store<Value> = {
     type: "store",
     key: options?.key ?? null,
     initialValue: value,
@@ -32,7 +38,12 @@ const createStore: CreateStore = (value, options) => {
       return changed;
     },
   };
+
+  stores.add(store);
+  privateLogger.add({ action: "store-created", meta: { store } });
+
+  return store;
 };
 
 export type { Store, CreateStore };
-export { createStore };
+export { stores, createStore };

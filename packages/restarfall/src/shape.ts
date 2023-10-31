@@ -7,6 +7,7 @@ import {
 } from "./unit";
 import { Event } from "./event";
 import { Store } from "./store";
+import { privateLogger } from "./private-root";
 
 // State [Data]
 type ShapeRawData = Record<string, unknown>;
@@ -263,6 +264,7 @@ const createShape: CreateShape = (parent) => {
     if (!methods) throw new Error("Incorrect element for attach to shape.");
 
     const shapeApi: ShapeApi = {
+      getShape: () => shape,
       getRawValue,
       deleteRawValue,
       getValue,
@@ -411,6 +413,7 @@ const createShape: CreateShape = (parent) => {
   };
 
   shapes.set(shape, { values });
+  privateLogger.add({ action: "shape-created", meta: { shape } });
 
   return shape;
 };
