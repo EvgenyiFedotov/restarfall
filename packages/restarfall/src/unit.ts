@@ -1,6 +1,7 @@
 import { Event } from "./event";
 import { Store } from "./store";
 import { Cache, createCache } from "./cache";
+import { privateLogger } from "./private-root";
 
 type Serialize = (
   getValue: <Value>(store: Store<Value>) => Value,
@@ -65,6 +66,7 @@ interface UnitElementInstance {
 }
 
 interface ShapeApi {
+  getShape: () => object;
   getRawValue: (key: string) => { value?: unknown };
   deleteRawValue: (key: string) => void;
   getValue: <Value>(store: Store<Value>) => Value;
@@ -100,6 +102,8 @@ let currentUnitContext: UnitContext | null = null;
 const toUnitElementArray = (children: ChildrenElements): ChildElement[] => {
   return children ? (Array.isArray(children) ? children : [children]) : [];
 };
+
+const units: WeakSet<Unit<never>> = new WeakSet();
 
 const createUnit: CreateUnit = (body, options) => {
   const unit: Unit<Parameters<typeof body>> = (...args) => {
@@ -160,6 +164,11 @@ const createUnit: CreateUnit = (body, options) => {
 
       instance.detachEffects = detachEffects;
       instance.attachEffects = attachEffects;
+
+      privateLogger.add({
+        action: "element-re-attached",
+        meta: { unit, element, shape: shapeApi.getShape() },
+      });
     };
 
     const attach: UnitAttach = (shapeApi) => {
@@ -182,6 +191,11 @@ const createUnit: CreateUnit = (body, options) => {
 
       call(instance, shapeApi);
 
+      privateLogger.add({
+        action: "element-attached",
+        meta: { unit, element, shape: shapeApi.getShape() },
+      });
+
       return instance;
     };
 
@@ -192,10 +206,15 @@ const createUnit: CreateUnit = (body, options) => {
       attach,
     });
 
+    privateLogger.add({ action: "element-created", meta: { unit, element } });
+
     return element;
   };
 
   unit.type = "unit";
+
+  units.add(unit);
+  privateLogger.add({ action: "unit-created", meta: { unit } });
 
   return unit;
 };
@@ -210,4 +229,4 @@ export type {
   ShapeApi,
   UnitContext,
 };
-export { elements, currentUnitContext, toUnitElementArray, createUnit };
+export { elements, currentUnitContext, toUnitElementArray, units, createUnit };
