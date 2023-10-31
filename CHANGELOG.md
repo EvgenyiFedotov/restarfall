@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.2.10](https://github.com/EvgenyiFedotov/restarfall/compare/v0.2.9...v0.2.10) (2023-10-31)
+
+
+### Features
+
+* **restarfall:** add logger and based events ([2f37bb5](https://github.com/EvgenyiFedotov/restarfall/commit/2f37bb5ff7d68de5c401d4cf35a211f84ca336c3))
+
 ### [0.2.9](https://github.com/EvgenyiFedotov/restarfall/compare/v0.2.8...v0.2.9) (2023-10-30)
 
 

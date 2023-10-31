@@ -2,7 +2,7 @@
   "name": "restarfall",
   "license": "MIT",
   "author": "Evgenii Fedotov",
-  "version": "0.2.9",
+  "version": "0.2.10",
   "description": "Restarfall is a JavaScript library for creating business logic and data management.",
   "keywords": [
     "business",
