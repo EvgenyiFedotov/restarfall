@@ -26,6 +26,38 @@ test("bind event", () => {
   expect(log.mock.calls).toEqual([[2]]);
 });
 
+test("bind event with extra", () => {
+  const update = create.event<{ name: string; age: number }>();
+  const updateName = create.event<{ name: string }>();
+  const updateAge = create.event<{ age: number }>();
+
+  const user = create.unit((params: { name: string; age: number }) => {
+    console.log(params);
+    return null;
+  });
+
+  const shape = create.shape();
+
+  shape.attach(units.bindEvent(update, user));
+  shape.attach(units.bindEvent(updateName, user, { age: 1 }));
+  shape.attach(units.bindEvent(updateAge, user, { name: "John" }));
+
+  shape.callEvent(update, { name: "_", age: 2 });
+  shape.callEvent(updateName, { name: "__" });
+  shape.callEvent(updateAge, { age: 3 });
+
+  // -> { name: "_", age: 2 }
+  // -> { name: "__", age: 1 }
+  // -> { name: "John", age: 3 }
+
+  expect(log.mock.calls).toHaveLength(3);
+  expect(log.mock.calls).toEqual([
+    [{ name: "_", age: 2 }],
+    [{ name: "__", age: 1 }],
+    [{ name: "John", age: 3 }],
+  ]);
+});
+
 test("combine event without fn", () => {
   const inc = create.event<number>();
   const dec = create.event<number>();
