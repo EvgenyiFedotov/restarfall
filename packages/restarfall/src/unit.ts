@@ -18,6 +18,7 @@ interface UnitElement {
 
 interface Unit<Args extends unknown[]> {
   (...args: Args): UnitElement;
+  key: string | null;
   type: "unit";
 }
 
@@ -142,6 +143,8 @@ const createUnit: CreateUnit = (body, options) => {
         if (element === children[index]?.element) {
           const child = children[index];
 
+          if (!child) return;
+
           elementApi.reattach(child, shapeApi);
           instance.children.push(child);
           return;
@@ -212,6 +215,7 @@ const createUnit: CreateUnit = (body, options) => {
   };
 
   unit.type = "unit";
+  unit.key = options?.key ?? null;
 
   units.add(unit);
   privateLogger.add({ action: "unit-created", meta: { unit } });

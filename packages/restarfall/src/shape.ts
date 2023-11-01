@@ -85,37 +85,43 @@ interface ShapeState {
 }
 
 interface Shape {
-  type: "shape";
+  readonly type: "shape";
+  readonly key: string | null;
 
   // Methods [Data]
-  setRawData: ShapeSetRawData;
-  serialize: ShapeSerialize;
+  readonly setRawData: ShapeSetRawData;
+  readonly serialize: ShapeSerialize;
 
   // Methods [Values]
-  hasValue: ShapeHasValue;
-  getValue: ShapeGetValue;
-  setValue: ShapeSetValue;
-  changeValue: ShapeChangeValue;
+  readonly hasValue: ShapeHasValue;
+  readonly getValue: ShapeGetValue;
+  readonly setValue: ShapeSetValue;
+  readonly changeValue: ShapeChangeValue;
 
   // Methods [Events]
-  getEventState: ShapeGetEventState;
-  unlistenEvent: ShapeUnlistenEvent;
-  listenEvent: ShapeListenEvent;
-  callEvent: ShapeCallEvent;
+  readonly getEventState: ShapeGetEventState;
+  readonly unlistenEvent: ShapeUnlistenEvent;
+  readonly listenEvent: ShapeListenEvent;
+  readonly callEvent: ShapeCallEvent;
 
   // Methods [Units]
-  attach: ShapeAttach;
-  wait: ShapeWait;
+  readonly attach: ShapeAttach;
+  readonly wait: ShapeWait;
+}
+
+interface CreateShapeOptions {
+  parent?: Shape;
+  key?: string | null;
 }
 
 interface CreateShape {
-  (parent?: Shape): Shape;
+  (options?: CreateShapeOptions): Shape;
 }
 
 const shapes: WeakMap<Shape, ShapeState> = new WeakMap();
 
-const createShape: CreateShape = (parent) => {
-  const parentState = parent ? shapes.get(parent) : null;
+const createShape: CreateShape = (options) => {
+  const parentState = options?.parent ? shapes.get(options.parent) : null;
 
   // State
   const rawData: ShapeRawData = {};
@@ -238,7 +244,7 @@ const createShape: CreateShape = (parent) => {
     for (const key in dependListeners) {
       const listener = dependListeners[key];
 
-      if (events.get(event)?.has(listener)) listener(value, prev);
+      if (listener && events.get(event)?.has(listener)) listener(value, prev);
     }
 
     for (const listener of outsideListeners) {
@@ -390,6 +396,7 @@ const createShape: CreateShape = (parent) => {
   // Shape
   const shape: Shape = {
     type: "shape",
+    key: options?.key ?? null,
 
     // Methods [Data]
     setRawData,

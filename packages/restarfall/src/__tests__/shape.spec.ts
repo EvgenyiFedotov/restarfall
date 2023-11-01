@@ -107,12 +107,12 @@ test("changeValue", () => {
 });
 
 test("with parent shape", () => {
-  const rootShape = create.shape();
+  const parent = create.shape();
   const $count = create.store<number>(0);
 
-  rootShape.setValue($count, 2);
+  parent.setValue($count, 2);
 
-  const shape = create.shape(rootShape);
+  const shape = create.shape({ parent });
 
   console.log(shape.hasValue($count));
   console.log(shape.getValue($count));
