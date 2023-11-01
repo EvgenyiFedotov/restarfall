@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.3.0](https://github.com/EvgenyiFedotov/restarfall/compare/v0.2.10...v0.3.0) (2023-11-01)
+
+
+### ⚠ BREAKING CHANGES
+
+* **restarfall:** added key for shape and unit, parent of shape through options
+
+### Features
+
+* **restarfall-ext:** add extra payload for bindEvent ([cb32fd8](https://github.com/EvgenyiFedotov/restarfall/commit/cb32fd8a913a0852b9008102b0bcf7b01c53ebe9))
+* **restarfall:** added key for shape and unit, parent of shape through options ([78c2d05](https://github.com/EvgenyiFedotov/restarfall/commit/78c2d0520914787492745a90eeaff17b66b95839))
+
 ### [0.2.10](https://github.com/EvgenyiFedotov/restarfall/compare/v0.2.9...v0.2.10) (2023-10-31)
 
 
