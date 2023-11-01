@@ -8,12 +8,13 @@
     "allowSyntheticDefaultImports": true,
     "jsx": "react",
     "esModuleInterop": true,
-    "strictNullChecks": true,
+    "resolveJsonModule": true,
+    "noUncheckedIndexedAccess": true,
 
     "declaration": true,
     "outDir": "./dist/types"
   },
-  "include": ["./packages"],
+  "include": ["./packages", "./examples"],
   "exclude": [
     "node_modules",
     "**/*.spec.ts",
