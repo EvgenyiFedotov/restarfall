@@ -153,10 +153,12 @@ const createShape: CreateShape = (options) => {
         elements.get(instance.element)?.serialize?.(getValue) ?? {},
       );
       instance.allChidlren.forEach((childInstance) => {
-        Object.assign(
-          data,
-          elements.get(childInstance.element)?.serialize?.(getValue) ?? {},
-        );
+        if (childInstance) {
+          Object.assign(
+            data,
+            elements.get(childInstance.element)?.serialize?.(getValue) ?? {},
+          );
+        }
       });
     });
 
@@ -224,7 +226,7 @@ const createShape: CreateShape = (options) => {
       (memo, rootInstance) => {
         memo.set(rootInstance, memo.size);
         rootInstance.allChidlren.forEach((childIntance) => {
-          memo.set(childIntance, memo.size);
+          if (childIntance) memo.set(childIntance, memo.size);
         });
         return memo;
       },
@@ -299,7 +301,7 @@ const createShape: CreateShape = (options) => {
           // unlink
           unlinkInstance(instance);
           prevAllChidlren.forEach((childInstance) => {
-            unlinkInstance(childInstance);
+            if (childInstance) unlinkInstance(childInstance);
           });
 
           // reattach
@@ -314,19 +316,19 @@ const createShape: CreateShape = (options) => {
           // link
           instance.depends.forEach(createListen(instance));
           currAllChildren.forEach((childInstance) => {
-            childInstance.depends.forEach(createListen(childInstance));
+            childInstance?.depends.forEach(createListen(childInstance));
           });
 
           // detach effect
           prevAllChidlren.forEach((childInstance) => {
-            if (!currAllChildren.has(childInstance)) {
+            if (childInstance && !currAllChildren.has(childInstance)) {
               childInstance.detachEffects.forEach((effect) => effect());
             }
           });
 
           // attach effect
           currAllChildren.forEach((childInstance) => {
-            if (!prevAllChidlren.has(childInstance)) {
+            if (childInstance && !prevAllChidlren.has(childInstance)) {
               childInstance.attachEffects.forEach((effect) => effect());
             }
           });
@@ -346,13 +348,13 @@ const createShape: CreateShape = (options) => {
     // link
     rootInstance.depends.forEach(createListen(rootInstance));
     rootInstance.allChidlren.forEach((childInstance) => {
-      childInstance.depends.forEach(createListen(childInstance));
+      childInstance?.depends.forEach(createListen(childInstance));
     });
 
     // attach effect
     rootInstance.attachEffects.forEach((effect) => effect());
     rootInstance.allChidlren.forEach((childInstance) => {
-      childInstance.attachEffects.forEach((effect) => effect());
+      childInstance?.attachEffects.forEach((effect) => effect());
     });
 
     // call events from queue
@@ -366,7 +368,7 @@ const createShape: CreateShape = (options) => {
       return roots.flatMap((rootInstance) => [
         ...Array.from(rootInstance.promises),
         ...rootInstance.allChidlren.flatMap((child) =>
-          Array.from(child.promises),
+          child ? Array.from(child.promises) : [],
         ),
       ]);
     };

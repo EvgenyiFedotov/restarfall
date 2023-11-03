@@ -1,9 +1,25 @@
 /* eslint-disable no-console */
-import { create, use } from "../index";
+import { UnitElement, create, use } from "../index";
 
 const log = jest.fn();
 global.console = { ...console, log };
 beforeEach(() => log.mockClear());
+
+const bodyLog =
+  (params: { body?: unknown[]; detach?: unknown[]; attach?: unknown[] }) =>
+  () => {
+    if (params.body) console.log(...params.body);
+
+    use.detach(() => {
+      if (params.detach) console.log(...params.detach);
+    });
+
+    use.attach(() => {
+      if (params.attach) console.log(...params.attach);
+    });
+
+    return null;
+  };
 
 test("example for usage", () => {
   const $count = create.store<number>(0);
@@ -470,5 +486,115 @@ test("change store into unit [more simple case]", () => {
     ["updated", 0],
     ["change"],
     ["updated", 2],
+  ]);
+});
+
+test("detach / attach with few null-child", () => {
+  const $element = create.store<UnitElement | null>(null);
+
+  const update = create.event<void>();
+
+  const toggler = create.unit(
+    bodyLog({ detach: ["toggler.detach"], attach: ["toggler.attach"] }),
+  );
+  const signin = create.unit(
+    bodyLog({ detach: ["signin.detach"], attach: ["signin.attach"] }),
+  );
+  const signup = create.unit(
+    bodyLog({ detach: ["signup.detach"], attach: ["signup.attach"] }),
+  );
+
+  const launch = create.unit(() => {
+    const { called } = use.depend(update);
+
+    const tglr = use.cache($element).get().value ?? toggler();
+
+    use.cache($element).set(tglr);
+
+    if (called) return [null, tglr, signin(), signup()];
+
+    return [null, tglr, null];
+  });
+
+  const shape = create.shape();
+
+  shape.attach(launch());
+  shape.callEvent(update);
+  shape.callEvent(update);
+
+  // -> "toggler.attach"
+  // -> "signin.attach"
+  // -> "signup.attach"
+  // -> "signin.detach"
+  // -> "signup.detach"
+  // -> "signin.attach"
+  // -> "signup.attach"
+
+  expect(log.mock.calls).toHaveLength(7);
+  expect(log.mock.calls).toEqual([
+    ["toggler.attach"],
+
+    ["signin.attach"],
+    ["signup.attach"],
+
+    ["signin.detach"],
+    ["signup.detach"],
+    ["signin.attach"],
+    ["signup.attach"],
+  ]);
+});
+
+test("detach / attach with move child between children", () => {
+  const $element = create.store<UnitElement | null>(null);
+
+  const update = create.event<void>();
+
+  const toggler = create.unit(
+    bodyLog({ detach: ["toggler.detach"], attach: ["toggler.attach"] }),
+  );
+  const signin = create.unit(
+    bodyLog({ detach: ["signin.detach"], attach: ["signin.attach"] }),
+  );
+  const signup = create.unit(
+    bodyLog({ detach: ["signup.detach"], attach: ["signup.attach"] }),
+  );
+
+  const launch = create.unit(() => {
+    const { called } = use.depend(update);
+
+    const tglr = use.cache($element).get().value ?? toggler();
+
+    use.cache($element).set(tglr);
+
+    if (called) return [null, signin(), signup(), tglr];
+
+    return [null, tglr, null];
+  });
+
+  const shape = create.shape();
+
+  shape.attach(launch());
+  shape.callEvent(update);
+  shape.callEvent(update);
+
+  // -> "toggler.attach"
+  // -> "signin.attach"
+  // -> "signup.attach"
+  // -> "signin.detach"
+  // -> "signup.detach"
+  // -> "signin.attach"
+  // -> "signup.attach"
+
+  expect(log.mock.calls).toHaveLength(7);
+  expect(log.mock.calls).toEqual([
+    ["toggler.attach"],
+
+    ["signin.attach"],
+    ["signup.attach"],
+
+    ["signin.detach"],
+    ["signup.detach"],
+    ["signin.attach"],
+    ["signup.attach"],
   ]);
 });

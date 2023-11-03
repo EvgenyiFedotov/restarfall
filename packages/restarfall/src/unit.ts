@@ -62,8 +62,8 @@ interface UnitElementInstance {
   detachEffects: DetachEffects;
   attachEffects: AttachEffects;
   promises: Promises;
-  children: UnitElementInstance[];
-  allChidlren: UnitElementInstance[];
+  children: Map<UnitElement | null, UnitElementInstance | null>;
+  allChidlren: (UnitElementInstance | null)[];
 }
 
 interface ShapeApi {
@@ -119,7 +119,7 @@ const createUnit: CreateUnit = (body, options) => {
 
       instance.depends = new Map();
       instance.promises = new Set();
-      instance.children = [];
+      instance.children = new Map();
 
       currentUnitContext = { instance, shapeApi };
 
@@ -133,24 +133,27 @@ const createUnit: CreateUnit = (body, options) => {
         shapeApi.setValue(params.store, params.value);
       });
 
-      toUnitElementArray(body(...args)).forEach((element, index) => {
-        if (!element) return;
+      toUnitElementArray(body(...args)).forEach((element) => {
+        if (!element) {
+          instance.children.set(null, null);
+          return;
+        }
 
         const elementApi = elements.get(element);
 
         if (!elementApi) return;
 
-        if (element === children[index]?.element) {
-          const child = children[index];
+        if (children.has(element)) {
+          const child = children.get(element);
 
           if (!child) return;
 
           elementApi.reattach(child, shapeApi);
-          instance.children.push(child);
+          instance.children.set(element, child);
           return;
         }
 
-        instance.children.push(elementApi.attach(shapeApi));
+        instance.children.set(element, elementApi.attach(shapeApi));
       });
 
       currentUnitContext = previousUnitContext;
@@ -183,12 +186,11 @@ const createUnit: CreateUnit = (body, options) => {
         detachEffects: new Set(),
         attachEffects: new Set(),
         promises: new Set(),
-        children: [],
+        children: new Map(),
         get allChidlren() {
-          return instance.children.flatMap((child) => [
-            child,
-            ...child.allChidlren,
-          ]);
+          return [...instance.children.values()].flatMap((child) =>
+            child ? [child, ...child.allChidlren] : [child],
+          );
         },
       };
 
