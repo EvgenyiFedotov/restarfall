@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.3.1](https://github.com/EvgenyiFedotov/restarfall/compare/v0.3.0...v0.3.1) (2023-11-03)
+
+
+### Bug Fixes
+
+* **restarfall:** detach / attach ([1b27e6e](https://github.com/EvgenyiFedotov/restarfall/commit/1b27e6e4591bfbfa698c2c851d2e01ff869eb671))
+
 ## [0.3.0](https://github.com/EvgenyiFedotov/restarfall/compare/v0.2.10...v0.3.0) (2023-11-01)
 
 
