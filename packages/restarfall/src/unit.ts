@@ -133,28 +133,30 @@ const createUnit: CreateUnit = (body, options) => {
         shapeApi.setValue(params.store, params.value);
       });
 
-      toUnitElementArray(body(...args)).forEach((element) => {
-        if (!element) {
-          instance.children.set(null, null);
-          return;
-        }
+      Array.from(new Set(toUnitElementArray(body(...args)))).forEach(
+        (element) => {
+          if (!element) {
+            instance.children.set(null, null);
+            return;
+          }
 
-        const elementApi = elements.get(element);
+          const elementApi = elements.get(element);
 
-        if (!elementApi) return;
+          if (!elementApi) return;
 
-        if (children.has(element)) {
-          const child = children.get(element);
+          if (children.has(element)) {
+            const child = children.get(element);
 
-          if (!child) return;
+            if (!child) return;
 
-          elementApi.reattach(child, shapeApi);
-          instance.children.set(element, child);
-          return;
-        }
+            elementApi.reattach(child, shapeApi);
+            instance.children.set(element, child);
+            return;
+          }
 
-        instance.children.set(element, elementApi.attach(shapeApi));
-      });
+          instance.children.set(element, elementApi.attach(shapeApi));
+        },
+      );
 
       currentUnitContext = previousUnitContext;
     };

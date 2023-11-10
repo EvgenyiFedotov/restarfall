@@ -625,27 +625,21 @@ test("detach / attach with the same element", () => {
   shape.callEvent(update, true);
 
   // -> "toggler.body"
-  // -> "toggler.body"
   // -> "toggler.attach"
 
   // -> "toggler.body"
-  // -> "toggler.body"
 
-  // -> "toggler.body"
   // -> "toggler.body"
   // -> "toggler.detach"
   // -> "toggler.attach"
 
-  expect(log.mock.calls).toHaveLength(9);
+  expect(log.mock.calls).toHaveLength(6);
   expect(log.mock.calls).toEqual([
-    ["toggler.body"],
     ["toggler.body"],
     ["toggler.attach"],
 
     ["toggler.body"],
-    ["toggler.body"],
 
-    ["toggler.body"],
     ["toggler.body"],
     ["toggler.detach"],
     ["toggler.attach"],
