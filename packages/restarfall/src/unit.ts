@@ -160,6 +160,11 @@ const createUnit: CreateUnit = (body, options) => {
     };
 
     const reattach: UnitReattach = (instance, shapeApi) => {
+      privateLogger.add({
+        action: "element-re-attach",
+        meta: { unit, element, shape: shapeApi.getShape() },
+      });
+
       const detachEffects = instance.detachEffects;
       const attachEffects = instance.attachEffects;
 
@@ -178,6 +183,11 @@ const createUnit: CreateUnit = (body, options) => {
     };
 
     const attach: UnitAttach = (shapeApi) => {
+      privateLogger.add({
+        action: "element-attach",
+        meta: { unit, element, shape: shapeApi.getShape() },
+      });
+
       const instance: UnitElementInstance = {
         type: "unit-element-instance",
         element,

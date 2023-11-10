@@ -4,7 +4,9 @@ type Action =
   | "unit-created"
   | "shape-created"
   | "element-created"
+  | "element-attach"
   | "element-attached"
+  | "element-re-attach"
   | "element-re-attached";
 
 interface PrivateLogEvent {

@@ -68,7 +68,7 @@ test("element created", () => {
   expect(logs[1].meta).toEqual({ unit, element });
 });
 
-test("element attached", () => {
+test("element attach / attached", () => {
   const logger = createLogger();
   const unit = create.unit(() => null);
   const element = unit();
@@ -78,12 +78,14 @@ test("element attached", () => {
 
   const logs = logger.getEvents();
 
-  expect(logs).toHaveLength(4);
-  expect(logs[3].action).toEqual("element-attached");
+  expect(logs).toHaveLength(5);
+  expect(logs[3].action).toEqual("element-attach");
   expect(logs[3].meta).toEqual({ unit, element, shape });
+  expect(logs[4].action).toEqual("element-attached");
+  expect(logs[4].meta).toEqual({ unit, element, shape });
 });
 
-test("element re-attached", () => {
+test("element re-attach / re-attached", () => {
   const logger = createLogger();
   const event = create.event<void>();
   const unit = create.unit(() => {
@@ -98,7 +100,9 @@ test("element re-attached", () => {
 
   const logs = logger.getEvents();
 
-  expect(logs).toHaveLength(6);
-  expect(logs[5].action).toEqual("element-re-attached");
-  expect(logs[5].meta).toEqual({ unit, element, shape });
+  expect(logs).toHaveLength(8);
+  expect(logs[6].action).toEqual("element-re-attach");
+  expect(logs[6].meta).toEqual({ unit, element, shape });
+  expect(logs[7].action).toEqual("element-re-attached");
+  expect(logs[7].meta).toEqual({ unit, element, shape });
 });

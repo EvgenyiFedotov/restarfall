@@ -490,26 +490,24 @@ test("change store into unit [more simple case]", () => {
 });
 
 test("detach / attach with few null-child", () => {
-  const $element = create.store<UnitElement | null>(null);
-
   const update = create.event<void>();
 
   const toggler = create.unit(
+    // eslint-disable-next-line sonarjs/no-duplicate-string
     bodyLog({ detach: ["toggler.detach"], attach: ["toggler.attach"] }),
   );
   const signin = create.unit(
+    // eslint-disable-next-line sonarjs/no-duplicate-string
     bodyLog({ detach: ["signin.detach"], attach: ["signin.attach"] }),
   );
   const signup = create.unit(
+    // eslint-disable-next-line sonarjs/no-duplicate-string
     bodyLog({ detach: ["signup.detach"], attach: ["signup.attach"] }),
   );
 
   const launch = create.unit(() => {
     const { called } = use.depend(update);
-
-    const tglr = use.cache($element).get().value ?? toggler();
-
-    use.cache($element).set(tglr);
+    const tglr = use.cache<UnitElement>("tglr").take(toggler);
 
     if (called) return [null, tglr, signin(), signup()];
 
@@ -545,8 +543,6 @@ test("detach / attach with few null-child", () => {
 });
 
 test("detach / attach with move child between children", () => {
-  const $element = create.store<UnitElement | null>(null);
-
   const update = create.event<void>();
 
   const toggler = create.unit(
@@ -561,10 +557,7 @@ test("detach / attach with move child between children", () => {
 
   const launch = create.unit(() => {
     const { called } = use.depend(update);
-
-    const tglr = use.cache($element).get().value ?? toggler();
-
-    use.cache($element).set(tglr);
+    const tglr = use.cache<UnitElement>().take(toggler);
 
     if (called) return [null, signin(), signup(), tglr];
 
@@ -596,5 +589,108 @@ test("detach / attach with move child between children", () => {
     ["signup.detach"],
     ["signin.attach"],
     ["signup.attach"],
+  ]);
+});
+
+test("detach / attach with the same element", () => {
+  const update = create.event<boolean>();
+
+  const toggler = create.unit(
+    bodyLog({
+      // eslint-disable-next-line sonarjs/no-duplicate-string
+      body: ["toggler.body"],
+      detach: ["toggler.detach"],
+      attach: ["toggler.attach"],
+    }),
+  );
+
+  const launch = create.unit(() => {
+    const { payload } = use.depend(update);
+    const cache = use.cache<UnitElement>("element");
+
+    let element = cache.take(() => toggler());
+
+    if (payload) {
+      element = toggler();
+      cache.set(element);
+    }
+
+    return [element, element];
+  });
+
+  const shape = create.shape();
+
+  shape.attach(launch());
+  shape.callEvent(update, false);
+  shape.callEvent(update, true);
+
+  // -> "toggler.body"
+  // -> "toggler.body"
+  // -> "toggler.attach"
+
+  // -> "toggler.body"
+  // -> "toggler.body"
+
+  // -> "toggler.body"
+  // -> "toggler.body"
+  // -> "toggler.detach"
+  // -> "toggler.attach"
+
+  expect(log.mock.calls).toHaveLength(9);
+  expect(log.mock.calls).toEqual([
+    ["toggler.body"],
+    ["toggler.body"],
+    ["toggler.attach"],
+
+    ["toggler.body"],
+    ["toggler.body"],
+
+    ["toggler.body"],
+    ["toggler.body"],
+    ["toggler.detach"],
+    ["toggler.attach"],
+  ]);
+});
+
+test("detach / attach with cache few elements", () => {
+  const update = create.event();
+
+  const toggler = create.unit(
+    bodyLog({
+      // eslint-disable-next-line sonarjs/no-duplicate-string
+      body: ["toggler.body"],
+      detach: ["toggler.detach"],
+      attach: ["toggler.attach"],
+    }),
+  );
+
+  const launch = create.unit(() => {
+    use.depend(update);
+
+    return use.cache<UnitElement[]>().take(() => [toggler(), toggler()]);
+  });
+
+  const shape = create.shape();
+
+  shape.attach(launch());
+  shape.callEvent(update, true);
+
+  // -> "toggler.body"
+  // -> "toggler.body"
+  // -> "toggler.attach"
+  // -> "toggler.attach"
+
+  // -> "toggler.body"
+  // -> "toggler.body"
+
+  expect(log.mock.calls).toHaveLength(6);
+  expect(log.mock.calls).toEqual([
+    ["toggler.body"],
+    ["toggler.body"],
+    ["toggler.attach"],
+    ["toggler.attach"],
+
+    ["toggler.body"],
+    ["toggler.body"],
   ]);
 });

@@ -20,13 +20,41 @@ type ElementCreated = LogEventBase<
   "element-created",
   { unit: Unit<unknown[]>; element: UnitElement }
 >;
+type ElementAttach = LogEventBase<
+  "element-attach",
+  {
+    unit: Unit<unknown[]>;
+    element: UnitElement;
+    parentElement: UnitElement;
+    shape: Shape;
+  }
+>;
 type ElementAttached = LogEventBase<
   "element-attached",
-  { unit: Unit<unknown[]>; element: UnitElement; shape: Shape }
+  {
+    unit: Unit<unknown[]>;
+    element: UnitElement;
+    parentElement: UnitElement;
+    shape: Shape;
+  }
+>;
+type ElementReattach = LogEventBase<
+  "element-re-attach",
+  {
+    unit: Unit<unknown[]>;
+    element: UnitElement;
+    parentElement: UnitElement;
+    shape: Shape;
+  }
 >;
 type ElementReattached = LogEventBase<
   "element-re-attached",
-  { unit: Unit<unknown[]>; element: UnitElement; shape: Shape }
+  {
+    unit: Unit<unknown[]>;
+    element: UnitElement;
+    parentElement: UnitElement;
+    shape: Shape;
+  }
 >;
 
 type LogEvent =
@@ -35,7 +63,9 @@ type LogEvent =
   | UnitCreated
   | ShapeCreated
   | ElementCreated
+  | ElementAttach
   | ElementAttached
+  | ElementReattach
   | ElementReattached;
 
 const isEvent = (logEvent: PrivateLogEvent): logEvent is LogEvent => {
