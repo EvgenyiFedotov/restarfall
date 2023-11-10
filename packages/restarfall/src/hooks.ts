@@ -101,19 +101,16 @@ interface CacheApi<Value> {
 }
 
 interface UseCache {
-  <Value>(store: Store<Value>, ...keys: unknown[]): CacheApi<Value>;
+  <Value>(...path: unknown[]): CacheApi<Value>;
 }
 
-const useCache: UseCache = <Value>(
-  store: Store<Value>,
-  ...keys: unknown[]
-): CacheApi<Value> => {
+const useCache: UseCache = <Value>(...path: unknown[]): CacheApi<Value> => {
   const { cache } = getCurrentUnitContext().instance;
 
   return {
-    get: () => cache.get([store, keys]),
-    set: (value) => cache.set([store, keys], value),
-    take: (create) => cache.take([store, keys], create),
+    get: () => cache.get(path),
+    set: (value) => cache.set(path, value),
+    take: (create) => cache.take(path, create),
   };
 };
 

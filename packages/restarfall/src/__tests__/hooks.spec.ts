@@ -212,7 +212,7 @@ test("useCache", () => {
   const $count = create.store<number>(0);
 
   const counter = create.unit(() => {
-    const countCache = use.cache($count);
+    const countCache = use.cache<number>("count");
     const countByGet = countCache.get();
     const countByTake = countCache.take(() => 1);
 
@@ -238,8 +238,6 @@ test("useCache", () => {
 });
 
 test("useCache element", () => {
-  const $updateElement = create.store<UnitElement | null>(null);
-
   const change = create.event<void>();
 
   const update = create.unit(() => {
@@ -247,9 +245,12 @@ test("useCache element", () => {
   });
 
   const counter = create.unit(() => {
-    const updateElement = use.cache($updateElement).take(update);
+    const updateElement = use.cache<UnitElement>("element").take(update);
+
     console.log(updateElement);
+
     use.depend(change);
+
     return [updateElement];
   });
 
@@ -267,8 +268,6 @@ test("useCache element", () => {
 });
 
 test("useCache with tail", () => {
-  const $updateElement = create.store<UnitElement | null>(null);
-
   const change = create.event<void>();
 
   const update = create.unit(() => {
@@ -277,11 +276,14 @@ test("useCache with tail", () => {
 
   const counter = create.unit(() => {
     const elements = {
-      first: use.cache($updateElement, "first").take(update),
-      last: use.cache($updateElement, "last").take(update),
+      first: use.cache<UnitElement>("element", "first").take(update),
+      last: use.cache<UnitElement>("element", "last").take(update),
     };
+
     console.log(elements);
+
     use.depend(change);
+
     return [elements.first, elements.last];
   });
 
@@ -319,8 +321,6 @@ test("useDetach", () => {
 });
 
 test("useDetach with cache element", () => {
-  const $updateElement = create.store<UnitElement | null>(null);
-
   const change = create.event<void>();
 
   const update = create.unit(() => {
@@ -330,7 +330,8 @@ test("useDetach with cache element", () => {
 
   const counter = create.unit(() => {
     use.depend(change);
-    return [use.cache($updateElement).take(update), update()];
+
+    return [use.cache<UnitElement>("element").take(update), update()];
   });
 
   const shape = create.shape();
@@ -396,8 +397,6 @@ test("useAttach", () => {
 });
 
 test("useAttach with cache element", () => {
-  const $updateElement = create.store<UnitElement | null>(null);
-
   const change = create.event<void>();
 
   const update = create.unit(() => {
@@ -407,7 +406,8 @@ test("useAttach with cache element", () => {
 
   const counter = create.unit(() => {
     use.depend(change);
-    return [use.cache($updateElement).take(update), update()];
+
+    return [use.cache<UnitElement>("element").take(update), update()];
   });
 
   const shape = create.shape();

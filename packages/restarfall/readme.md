@@ -295,10 +295,8 @@ This hook is required to cache any data inside the unit body.
 ```ts
 import { create, use } from "restarfall";
 
-const $count = create.store<number>(0);
-
 const counter = create.unit(() => {
-  const countCache = use.cache($count);
+  const countCache = use.cache<number>("count");
   const countByGet = countCache.get().value;
   const countByTake = countCache.take(() => 3);
 
@@ -315,11 +313,9 @@ This use of the hook will make it possible not to create an additional store for
 ```ts
 import { create, use } from "restarfall";
 
-const $count = create.store<number>(0);
-
 const counter = create.unit(() => {
-  const countCacheFirst = use.cache($count, "first");
-  const countCacheLast = use.cache($count, "last");
+  const countCacheFirst = use.cache<number>("count", "first");
+  const countCacheLast = use.cache<number>("count", "last");
 
   countCacheFirst.take(() => 5);
   countCacheLast.take(() => 10);
