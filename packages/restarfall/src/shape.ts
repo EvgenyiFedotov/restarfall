@@ -427,5 +427,9 @@ const createShape: CreateShape = (options) => {
   return shape;
 };
 
+const isShape = (value: unknown): value is Shape => {
+  return shapes.has(value as never);
+};
+
 export type { EventListener, Shape, CreateShape };
-export { shapes, createShape };
+export { shapes, createShape, isShape };

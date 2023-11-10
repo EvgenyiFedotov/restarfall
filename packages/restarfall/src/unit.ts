@@ -225,6 +225,16 @@ const createUnit: CreateUnit = (body, options) => {
   return unit;
 };
 
+const isUnit = <Args extends unknown[]>(
+  value: unknown,
+): value is Unit<Args> => {
+  return units.has(value as never);
+};
+
+const isElement = (value: unknown): value is UnitElement => {
+  return elements.has(value as never);
+};
+
 export type {
   UnitElement,
   Unit,
@@ -235,4 +245,12 @@ export type {
   ShapeApi,
   UnitContext,
 };
-export { elements, currentUnitContext, toUnitElementArray, units, createUnit };
+export {
+  elements,
+  currentUnitContext,
+  toUnitElementArray,
+  units,
+  createUnit,
+  isUnit,
+  isElement,
+};

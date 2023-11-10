@@ -45,5 +45,9 @@ const createStore: CreateStore = <Value>(
   return store;
 };
 
+const isStore = <Value>(value: unknown): value is Store<Value> => {
+  return stores.has(value as never);
+};
+
 export type { Store, CreateStore };
-export { stores, createStore };
+export { stores, createStore, isStore };

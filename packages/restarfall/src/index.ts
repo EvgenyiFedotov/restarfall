@@ -1,7 +1,7 @@
-import { createEvent } from "./event";
-import { createStore } from "./store";
-import { createUnit } from "./unit";
-import { createShape } from "./shape";
+import { createEvent, isEvent } from "./event";
+import { createStore, isStore } from "./store";
+import { createUnit, isUnit, isElement } from "./unit";
+import { createShape, isShape } from "./shape";
 import {
   useDepend,
   useDispatch,
@@ -21,6 +21,13 @@ const create = {
   shape: createShape,
   logger: createLogger,
 };
+const is = {
+  event: isEvent,
+  store: isStore,
+  unit: isUnit,
+  element: isElement,
+  shape: isShape,
+};
 const use = {
   depend: useDepend,
   dispatch: useDispatch,
@@ -32,7 +39,7 @@ const use = {
   attach: useAttach,
 };
 
-export { create, use };
+export { create, is, use };
 export { toUnitElementArray } from "./unit";
 
 export type { Event } from "./event";

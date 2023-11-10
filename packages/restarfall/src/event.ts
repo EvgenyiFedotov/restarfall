@@ -25,5 +25,9 @@ const createEvent: CreateEvent = <Value>(options?: CreateEventOptions) => {
   return event;
 };
 
+const isEvent = <Value>(value: unknown): value is Event<Value> => {
+  return events.has(value as never);
+};
+
 export type { Event, CreateEvent };
-export { events, createEvent };
+export { events, createEvent, isEvent };
