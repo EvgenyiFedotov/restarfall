@@ -62,7 +62,7 @@ interface UnitElementInstance {
   detachEffects: DetachEffects;
   attachEffects: AttachEffects;
   promises: Promises;
-  children: Map<UnitElement | null, UnitElementInstance | null>;
+  children: (UnitElementInstance | null)[];
   allChidlren: (UnitElementInstance | null)[];
 }
 
@@ -116,10 +116,22 @@ const createUnit: CreateUnit = (body, options) => {
     const call: UnitCall = (instance, shapeApi) => {
       const previousUnitContext = currentUnitContext;
       const children = instance.children;
+      const childrenByElements = children.reduce<
+        Map<UnitElement, UnitElementInstance[]>
+      >((memo, child) => {
+        if (!child) return memo;
+
+        const elementChildren = memo.get(child.element) ?? [];
+
+        elementChildren.push(child);
+        memo.set(child.element, elementChildren);
+
+        return memo;
+      }, new Map());
 
       instance.depends = new Map();
       instance.promises = new Set();
-      instance.children = new Map();
+      instance.children = [];
 
       currentUnitContext = { instance, shapeApi };
 
@@ -133,30 +145,43 @@ const createUnit: CreateUnit = (body, options) => {
         shapeApi.setValue(params.store, params.value);
       });
 
-      Array.from(new Set(toUnitElementArray(body(...args)))).forEach(
-        (element) => {
-          if (!element) {
-            instance.children.set(null, null);
-            return;
-          }
+      const instancesByElements: Map<UnitElement, UnitElementInstance[]> =
+        new Map();
 
-          const elementApi = elements.get(element);
+      toUnitElementArray(body(...args)).forEach((element) => {
+        if (!element) {
+          instance.children.push(null);
+          return;
+        }
 
-          if (!elementApi) return;
+        const elementApi = elements.get(element);
 
-          if (children.has(element)) {
-            const child = children.get(element);
+        if (!elementApi) return;
 
-            if (!child) return;
+        const childrenByElement = childrenByElements.get(element) ?? [];
+        const elementInstances = instancesByElements.get(element) ?? [];
 
+        instancesByElements.set(element, elementInstances);
+
+        if (
+          childrenByElement.length > 0 &&
+          elementInstances.length <= childrenByElement.length
+        ) {
+          const child = childrenByElement[elementInstances.length];
+
+          if (child) {
+            elementInstances.push(child);
             elementApi.reattach(child, shapeApi);
-            instance.children.set(element, child);
+            instance.children.push(child);
             return;
           }
+        }
 
-          instance.children.set(element, elementApi.attach(shapeApi));
-        },
-      );
+        const elementInstance = elementApi.attach(shapeApi);
+
+        elementInstances.push(elementInstance);
+        instance.children.push(elementInstance);
+      });
 
       currentUnitContext = previousUnitContext;
     };
@@ -198,7 +223,7 @@ const createUnit: CreateUnit = (body, options) => {
         detachEffects: new Set(),
         attachEffects: new Set(),
         promises: new Set(),
-        children: new Map(),
+        children: [],
         get allChidlren() {
           return [...instance.children.values()].flatMap((child) =>
             child ? [child, ...child.allChidlren] : [child],

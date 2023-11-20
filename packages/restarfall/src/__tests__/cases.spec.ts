@@ -372,6 +372,7 @@ test("use element without cache", () => {
   // -> "detach"
   // -> "attach"
 
+  expect(log.mock.calls).toHaveLength(4);
   expect(log.mock.calls).toEqual([
     ["attach"],
     ["attach"],
@@ -625,23 +626,35 @@ test("detach / attach with the same element", () => {
   shape.callEvent(update, true);
 
   // -> "toggler.body"
+  // -> "toggler.body"
+  // -> "toggler.attach"
   // -> "toggler.attach"
 
   // -> "toggler.body"
+  // -> "toggler.body"
 
+  // -> "toggler.body"
   // -> "toggler.body"
   // -> "toggler.detach"
+  // -> "toggler.detach"
+  // -> "toggler.attach"
   // -> "toggler.attach"
 
-  expect(log.mock.calls).toHaveLength(6);
+  expect(log.mock.calls).toHaveLength(12);
   expect(log.mock.calls).toEqual([
     ["toggler.body"],
+    ["toggler.body"],
+    ["toggler.attach"],
     ["toggler.attach"],
 
     ["toggler.body"],
+    ["toggler.body"],
 
     ["toggler.body"],
+    ["toggler.body"],
     ["toggler.detach"],
+    ["toggler.detach"],
+    ["toggler.attach"],
     ["toggler.attach"],
   ]);
 });
