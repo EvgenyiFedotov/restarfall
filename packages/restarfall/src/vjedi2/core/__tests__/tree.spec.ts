@@ -4,6 +4,7 @@ import {
   createNode,
   createTree,
   getCurrentNode,
+  getDiff,
   popNode,
   pushNode,
 } from "../tree";
@@ -20,6 +21,7 @@ describe("createNode", () => {
       element,
       coordinates: { from: -1, to: -1, level: -1 },
       depends: [],
+      effects: { attached: new Set(), detached: new Set() },
       children: new Map(),
       scope: createScope(),
     });
@@ -416,5 +418,27 @@ describe("callDepend", () => {
       level: 0,
     });
     expect(nextTree.struct[0].children.size).toBe(0);
+  });
+});
+
+describe("getDiff", () => {
+  test("sturcture of result", () => {
+    const prev = createTree();
+    const next = createTree();
+    const element = createElement(() => null, []);
+    const prevNode = createNode(element);
+    const nextNode = createNode(element);
+    const commonNode = createNode(element);
+
+    attachNode(prev, prevNode);
+    attachNode(prev, commonNode);
+    attachNode(next, nextNode);
+    attachNode(next, commonNode);
+
+    const diff = getDiff(prev, next);
+
+    expect(diff.skipped).toEqual(new Set([commonNode]));
+    expect(diff.attached).toEqual(new Set([prevNode]));
+    expect(diff.detached).toEqual(new Set([nextNode]));
   });
 });

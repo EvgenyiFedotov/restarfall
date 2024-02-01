@@ -1,6 +1,12 @@
 import { createEvent } from "../event";
 import { createStore } from "../store";
-import { createScope, getEventMeta, getPayload, getValue } from "../scope";
+import {
+  createScope,
+  getEventMeta,
+  getPayload,
+  getValue,
+  wait,
+} from "../scope";
 
 describe("createScope", () => {
   test("instance", () => {
@@ -9,7 +15,9 @@ describe("createScope", () => {
     expect(scope).toEqual({
       payloads: new Map(),
       values: new Map(),
+      queue: [],
       calledEvent: null,
+      promises: new Set(),
     });
   });
 });
@@ -69,5 +77,43 @@ describe("getValue", () => {
     scope.values.set(store, "_");
 
     expect(getValue(scope, store)).toEqual({ value: "_" });
+  });
+});
+
+describe("wait", () => {
+  test("1 level promises", async () => {
+    const log = jest.fn();
+    const scope = createScope();
+    const promise = new Promise<void>((resolve) => {
+      log("promise");
+      resolve();
+    });
+
+    scope.promises.add(promise);
+    await wait(scope);
+
+    expect(scope.promises.size).toBe(0);
+    expect(log.mock.calls).toHaveLength(1);
+  });
+
+  test("2 level promises", async () => {
+    const log = jest.fn();
+    const scope = createScope();
+    const promise = new Promise<void>((resolve) => {
+      log("promise");
+      resolve();
+      scope.promises.add(
+        new Promise<void>((resolve) => {
+          log("promise");
+          resolve();
+        }),
+      );
+    });
+
+    scope.promises.add(promise);
+    await wait(scope);
+
+    expect(scope.promises.size).toBe(0);
+    expect(log.mock.calls).toHaveLength(2);
   });
 });

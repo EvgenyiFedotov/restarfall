@@ -16,7 +16,6 @@ describe("createShape", () => {
     expect(createShape()).toEqual({
       scope: createScope(),
       tree: createTree(),
-      queue: [],
     });
   });
 });
@@ -73,6 +72,7 @@ describe("dispatch", () => {
 
     contextStack.push({ shape });
     attachNode(shape.tree, node);
+    contextStack.pop();
     dispatch(shape, shape.scope, event);
 
     expect(log.mock.calls[0][0]).toBe(null);
@@ -89,5 +89,49 @@ describe("attachElement", () => {
     attachElement(shape, element);
 
     expect(shape.tree.struct).toHaveLength(1);
+  });
+
+  test("attached", () => {
+    const detached = jest.fn();
+    const attached = jest.fn();
+    const shape = createShape();
+    const event = createEvent<string>();
+    const element = createElement(() => {
+      getCurrentNodeStrict().depends.push({ event, filter: null });
+      getCurrentNodeStrict().effects.detached.add(detached);
+      getCurrentNodeStrict().effects.attached.add(attached);
+      return new Array(4).fill(null).map(() => createElement(() => [], []));
+    }, []);
+
+    attachElement(shape, element);
+    attachElement(shape, element);
+    dispatch(shape, shape.scope, event, "/");
+
+    expect(detached.mock.calls).toHaveLength(0);
+    expect(attached.mock.calls).toHaveLength(2);
+  });
+
+  test("dettached", () => {
+    const detached = jest.fn();
+    const attached = jest.fn();
+    const shape = createShape();
+    const event = createEvent<string>();
+    const element = createElement(() => {
+      getCurrentNodeStrict().depends.push({ event, filter: null });
+      return new Array(4).fill(null).map(() =>
+        createElement(() => {
+          getCurrentNodeStrict().effects.detached.add(detached);
+          getCurrentNodeStrict().effects.attached.add(attached);
+          return [];
+        }, []),
+      );
+    }, []);
+
+    attachElement(shape, element);
+    attachElement(shape, element);
+    dispatch(shape, shape.scope, event, "/");
+
+    expect(detached.mock.calls).toHaveLength(8);
+    expect(attached.mock.calls).toHaveLength(16);
   });
 });

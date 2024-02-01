@@ -1,8 +1,17 @@
-import { createElement } from "../element";
+import { Element, createElement } from "../element";
 import { createEvent } from "../event";
-import { useDepend, useDispatch, useScope, useTake, useValue } from "../hooks";
+import {
+  useAttach,
+  useDepend,
+  useDetach,
+  useDispatch,
+  usePromise,
+  useScope,
+  useTake,
+  useValue,
+} from "../hooks";
 import { createStore } from "../store";
-import { createScope } from "../scope";
+import { createScope, wait } from "../scope";
 import { attachElement, createShape, dispatch } from "../shape";
 
 const log = jest.fn();
@@ -206,6 +215,62 @@ describe("useDispatch", () => {
   });
 });
 
+describe("usePromise", () => {
+  test("1 level", async () => {
+    const shape = createShape();
+    const element = createElement(() => {
+      usePromise(
+        new Promise<void>((resolve) => {
+          setTimeout(() => {
+            log();
+            resolve();
+          }, 200);
+        }),
+      );
+      return [];
+    }, []);
+
+    attachElement(shape, element);
+    await wait(shape.scope);
+
+    expect(log.mock.calls).toHaveLength(1);
+  });
+
+  test("2 level", async () => {
+    const shape = createShape();
+    const child = createElement(() => {
+      log();
+      return [];
+    }, []);
+    const store = createStore<Element | null>(null);
+    const parent = createElement(() => {
+      const updateStore = useDispatch(store);
+      const result = useValue(store);
+
+      useDepend(store);
+
+      if (!result) {
+        usePromise(
+          new Promise<void>((resolve) => {
+            setTimeout(() => {
+              resolve();
+              updateStore(child);
+            }, 200);
+          }),
+        );
+      }
+
+      return result;
+    }, []);
+
+    attachElement(shape, parent);
+    await wait(shape.scope);
+
+    expect(log.mock.calls).toHaveLength(1);
+    expect(shape.scope.values.get(store)).toBe(child);
+  });
+});
+
 describe("useScope", () => {
   test("useDepend", () => {
     const shape = createShape();
@@ -223,5 +288,114 @@ describe("useScope", () => {
       [{ called: false, payload: {} }],
       [{ called: true, payload: { value: "_" } }],
     ]);
+  });
+});
+
+describe("useAttach", () => {
+  test("1 level", () => {
+    const attached = jest.fn();
+    const called = jest.fn();
+    const shape = createShape();
+    const event = createEvent<void>();
+    const element = createElement(() => {
+      useDepend(event);
+      useAttach(attached);
+      called();
+      return [];
+    }, []);
+
+    attachElement(shape, element);
+    dispatch(shape, shape.scope, event);
+
+    expect(attached.mock.calls).toHaveLength(1);
+    expect(called.mock.calls).toHaveLength(2);
+  });
+
+  test("2 level with reattach", () => {
+    const attached = jest.fn();
+    const called = jest.fn();
+    const shape = createShape();
+    const event = createEvent<void>();
+    const parent = createElement(() => {
+      useDepend(event);
+      return createElement(() => {
+        useAttach(attached);
+        called();
+        return [];
+      }, []);
+    }, []);
+
+    attachElement(shape, parent);
+    dispatch(shape, shape.scope, event);
+
+    expect(attached.mock.calls).toHaveLength(2);
+    expect(called.mock.calls).toHaveLength(2);
+  });
+
+  test("2 level with reattach with cache element", () => {
+    const attached = jest.fn();
+    const called = jest.fn();
+    const shape = createShape();
+    const event = createEvent<void>();
+    const child = createElement(() => {
+      useAttach(attached);
+      called();
+      return [];
+    }, []);
+    const parent = createElement(() => {
+      useDepend(event);
+      return child;
+    }, []);
+
+    attachElement(shape, parent);
+    dispatch(shape, shape.scope, event);
+
+    expect(attached.mock.calls).toHaveLength(1);
+    expect(called.mock.calls).toHaveLength(2);
+  });
+});
+
+describe("useDetach", () => {
+  test("without cached element", () => {
+    const detached = jest.fn();
+    const called = jest.fn();
+    const shape = createShape();
+    const event = createEvent<void>();
+    const element = createElement(() => {
+      useDepend(event);
+      return createElement(() => {
+        useDetach(detached);
+        called();
+        return [];
+      }, []);
+    }, []);
+
+    attachElement(shape, element);
+    dispatch(shape, shape.scope, event);
+
+    expect(detached.mock.calls).toHaveLength(1);
+    expect(called.mock.calls).toHaveLength(2);
+  });
+
+  test("with cached element", () => {
+    const detached = jest.fn();
+    const called = jest.fn();
+    const shape = createShape();
+    const event = createEvent<void>();
+    const child = createElement(() => {
+      useDetach(detached);
+      called();
+      return [];
+    }, []);
+    const element = createElement(() => {
+      useDepend(event);
+      return child;
+    }, []);
+
+    attachElement(shape, element);
+    dispatch(shape, shape.scope, event);
+
+    expect(detached.mock.calls).toHaveLength(0);
+    expect(called.mock.calls).toHaveLength(2);
   });
 });

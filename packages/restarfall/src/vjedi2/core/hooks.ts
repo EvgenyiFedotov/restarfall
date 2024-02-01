@@ -7,6 +7,7 @@ import {
   getScopeStrict,
   getShapeStrict,
 } from "./context";
+import { dispatch } from "./shape";
 
 interface UseDispatch {
   <Value>(key: Event<Value> | Store<Value>): (value: Value) => void;
@@ -56,9 +57,15 @@ const useDispatch: UseDispatch = (<T>(key: Event<T> | Store<T>) => {
   const scope = getScopeStrict();
 
   return (value: T): void => {
-    shape.queue.push({ scope, key, value });
+    dispatch(shape, scope, key, value);
   };
 }) as UseDispatch;
+
+const usePromise = <Value>(promise: Promise<Value>): Promise<Value> => {
+  getShapeStrict().scope.promises.add(promise);
+
+  return promise;
+};
 
 const useScope = <Args extends unknown[], Result>(
   callback: (...args: Args) => Result,
@@ -76,4 +83,21 @@ const useScope = <Args extends unknown[], Result>(
   return result;
 };
 
-export { useDepend, useValue, useTake, useDispatch, useScope };
+const useAttach = (callback: () => void): void => {
+  getCurrentNodeStrict().effects.attached.add(callback);
+};
+
+const useDetach = (callback: () => void): void => {
+  getCurrentNodeStrict().effects.detached.add(callback);
+};
+
+export {
+  useDepend,
+  useValue,
+  useTake,
+  useDispatch,
+  usePromise,
+  useScope,
+  useAttach,
+  useDetach,
+};

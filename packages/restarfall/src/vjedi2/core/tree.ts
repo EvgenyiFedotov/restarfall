@@ -17,6 +17,10 @@ interface Node {
     level: number;
   };
   depends: Depend[];
+  effects: {
+    attached: Set<() => void>;
+    detached: Set<() => void>;
+  };
   children: Map<Element, Node>;
   scope: Scope;
 }
@@ -32,6 +36,7 @@ const createNode = (element: Element): Node => ({
   depends: [],
   children: new Map(),
   scope: createScope(),
+  effects: { attached: new Set(), detached: new Set() },
 });
 
 const createTree = (): Tree => ({
@@ -122,6 +127,27 @@ const callDepend = <Payload>(
   }
 };
 
+const getDiff = (
+  prev: Tree,
+  next: Tree,
+): { skipped: Set<Node>; attached: Set<Node>; detached: Set<Node> } => {
+  const prevSet = new Set(prev.struct);
+  const skipped: Set<Node> = new Set();
+  const attached: Set<Node> = new Set();
+  const detached: Set<Node> = new Set();
+
+  next.struct.forEach((node) => {
+    if (prevSet.has(node)) skipped.add(node);
+    else attached.add(node);
+  });
+
+  prev.struct.forEach((node) => {
+    if (skipped.has(node) === false) detached.add(node);
+  });
+
+  return { skipped, attached, detached };
+};
+
 export type { Node, Tree };
 export {
   createNode,
@@ -131,4 +157,5 @@ export {
   attachNode,
   getCurrentNode,
   callDepend,
+  getDiff,
 };

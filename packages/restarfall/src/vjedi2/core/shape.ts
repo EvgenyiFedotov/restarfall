@@ -3,18 +3,18 @@ import { Element } from "./element";
 import { Event } from "./event";
 import { Scope, createScope } from "./scope";
 import { Store } from "./store";
-import { Tree, attachNode, callDepend, createNode, createTree } from "./tree";
-
-interface CalledEvent<Value> {
-  scope: Scope;
-  key: Event<Value> | Store<Value>;
-  value: Value;
-}
+import {
+  Tree,
+  attachNode,
+  callDepend,
+  createNode,
+  createTree,
+  getDiff,
+} from "./tree";
 
 interface Shape {
   scope: Scope;
   tree: Tree;
-  queue: CalledEvent<unknown>[];
 }
 
 interface Dispatch {
@@ -31,13 +31,12 @@ const createShape = (): Shape => {
   const shape: Shape = {
     scope: createScope(),
     tree: createTree(),
-    queue: [],
   };
 
   return shape;
 };
 
-const dispatch: Dispatch = (<Value>(
+const callEvent = <Value>(
   shape: Shape,
   scope: Scope,
   key: Event<Value> | Store<Value>,
@@ -58,18 +57,52 @@ const dispatch: Dispatch = (<Value>(
   contextStack.pop();
 
   scope.calledEvent = null;
+
+  const diff = getDiff(currTree, shape.tree);
+
+  diff.detached.forEach((node) => {
+    node.effects.detached.forEach((callback) => callback());
+  });
+  diff.attached.forEach((node) => {
+    node.effects.attached.forEach((callback) => callback());
+  });
+};
+
+const callEvents = (shape: Shape): void => {
+  shape.scope.queue.forEach(({ scope, key, value }) => {
+    callEvent(shape, scope, key, value);
+  });
+  shape.scope.queue = [];
+};
+
+const dispatch: Dispatch = (<Value>(
+  shape: Shape,
+  scope: Scope,
+  key: Event<Value> | Store<Value>,
+  value: Value,
+): void => {
+  shape.scope.queue.push({ scope, key, value });
+
+  if (contextStack.length > 0) return;
+
+  callEvents(shape);
 }) as Dispatch;
 
 const attachElement = (shape: Shape, element: Element): void => {
+  const length = shape.tree.struct.length;
+
   contextStack.push({ shape });
   attachNode(shape.tree, createNode(element));
   contextStack.pop();
 
-  shape.queue.forEach(({ scope, key, value }) => {
-    dispatch(shape, scope, key, value);
-  });
-  shape.queue = [];
+  for (let index = length; index < shape.tree.struct.length; index += 1) {
+    shape.tree.struct[index]?.effects.attached.forEach((callback) =>
+      callback(),
+    );
+  }
+
+  callEvents(shape);
 };
 
 export type { Shape };
-export { createShape, attachElement, dispatch };
+export { createShape, dispatch, attachElement };
