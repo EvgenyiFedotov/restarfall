@@ -12,7 +12,7 @@ import {
 } from "../hooks";
 import { createStore } from "../store";
 import { createScope, wait } from "../scope";
-import { attachElement, createShape, dispatch } from "../shape";
+import { attachElement, createShape, callEvent, changeValue } from "../shape";
 
 const log = jest.fn();
 
@@ -28,7 +28,7 @@ describe("useDepend", () => {
     }, []);
 
     attachElement(shape, element);
-    dispatch(shape, shape.scope, event, "/");
+    callEvent(shape, shape.scope, event, "/");
 
     expect(log.mock.calls).toEqual([
       [{ called: false, payload: {} }],
@@ -45,7 +45,7 @@ describe("useDepend", () => {
     }, []);
 
     attachElement(shape, element);
-    dispatch(shape, shape.scope, store, "_");
+    changeValue(shape, shape.scope, store, "_");
 
     expect(log.mock.calls).toEqual([
       [{ called: false, payload: {} }],
@@ -63,7 +63,7 @@ describe("useDepend", () => {
     }, []);
 
     attachElement(shape, element);
-    dispatch(shape, scope, store, "_");
+    changeValue(shape, scope, store, "_");
 
     expect(log.mock.calls).toEqual([[{ called: false, payload: {} }]]);
   });
@@ -82,7 +82,7 @@ describe("useDepend", () => {
     }, []);
 
     attachElement(shape, element);
-    dispatch(shape, shape.scope, event, "_");
+    callEvent(shape, shape.scope, event, "_");
 
     expect(log.mock.calls).toEqual([
       [{ called: false, payload: {} }],
@@ -99,7 +99,7 @@ describe("useDepend", () => {
     }, []);
 
     attachElement(shape, element);
-    dispatch(shape, shape.scope, event, "_");
+    callEvent(shape, shape.scope, event, "_");
 
     expect(log.mock.calls).toEqual([[{ called: false, payload: {} }]]);
   });
@@ -281,8 +281,8 @@ describe("useScope", () => {
     }, []);
 
     attachElement(shape, element);
-    dispatch(shape, shape.scope, event, "/");
-    dispatch(shape, shape.tree.struct[0].scope, event, "_");
+    callEvent(shape, shape.scope, event, "/");
+    callEvent(shape, shape.tree.struct[0].scope, event, "_");
 
     expect(log.mock.calls).toEqual([
       [{ called: false, payload: {} }],
@@ -305,7 +305,7 @@ describe("useAttach", () => {
     }, []);
 
     attachElement(shape, element);
-    dispatch(shape, shape.scope, event);
+    callEvent(shape, shape.scope, event, undefined);
 
     expect(attached.mock.calls).toHaveLength(1);
     expect(called.mock.calls).toHaveLength(2);
@@ -326,7 +326,7 @@ describe("useAttach", () => {
     }, []);
 
     attachElement(shape, parent);
-    dispatch(shape, shape.scope, event);
+    callEvent(shape, shape.scope, event, undefined);
 
     expect(attached.mock.calls).toHaveLength(2);
     expect(called.mock.calls).toHaveLength(2);
@@ -348,7 +348,7 @@ describe("useAttach", () => {
     }, []);
 
     attachElement(shape, parent);
-    dispatch(shape, shape.scope, event);
+    callEvent(shape, shape.scope, event, undefined);
 
     expect(attached.mock.calls).toHaveLength(1);
     expect(called.mock.calls).toHaveLength(2);
@@ -371,7 +371,7 @@ describe("useDetach", () => {
     }, []);
 
     attachElement(shape, element);
-    dispatch(shape, shape.scope, event);
+    callEvent(shape, shape.scope, event, undefined);
 
     expect(detached.mock.calls).toHaveLength(1);
     expect(called.mock.calls).toHaveLength(2);
@@ -393,7 +393,7 @@ describe("useDetach", () => {
     }, []);
 
     attachElement(shape, element);
-    dispatch(shape, shape.scope, event);
+    callEvent(shape, shape.scope, event, undefined);
 
     expect(detached.mock.calls).toHaveLength(0);
     expect(called.mock.calls).toHaveLength(2);

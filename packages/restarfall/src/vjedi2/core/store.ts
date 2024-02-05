@@ -5,9 +5,12 @@ interface Store<Value> {
   changed: Event<Value>;
 }
 
-const createStore = <Value>(initialValue: Value): Store<Value> => ({
+const createStore = <Value>(
+  initialValue: Value,
+  changed: Event<Value> = createEvent(),
+): Store<Value> => ({
   initialValue,
-  changed: createEvent(),
+  changed,
 });
 
 export type { Store };

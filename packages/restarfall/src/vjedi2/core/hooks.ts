@@ -7,16 +7,18 @@ import {
   getScopeStrict,
   getShapeStrict,
 } from "./context";
-import { dispatch } from "./shape";
+import { callEvent, changeValue } from "./shape";
 
 interface UseDispatch {
-  <Value>(key: Event<Value> | Store<Value>): (value: Value) => void;
+  <Value>(
+    key: Event<Value> | Store<Value>,
+  ): (value: Value, needChange?: boolean) => void;
   (key: Event<void> | Store<void>): () => void;
 }
 
 const useDepend = <T>(
   key: Event<T> | Store<T>,
-  filter?: ((value: Frame<T>) => boolean) | undefined | null | boolean,
+  filter?: ((payload: Frame<T>) => boolean) | undefined | null | boolean,
 ): EventMeta<T> => {
   const scope = getScopeStrict();
   const node = getCurrentNodeStrict();
@@ -56,8 +58,8 @@ const useDispatch: UseDispatch = (<T>(key: Event<T> | Store<T>) => {
   const shape = getShapeStrict();
   const scope = getScopeStrict();
 
-  return (value: T): void => {
-    dispatch(shape, scope, key, value);
+  return (value: T, needChange = false): void => {
+    dispatch(shape, scope, key, value, needChange);
   };
 }) as UseDispatch;
 

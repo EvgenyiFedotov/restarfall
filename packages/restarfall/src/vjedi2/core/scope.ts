@@ -10,18 +10,20 @@ interface EventMeta<Payload> {
   payload: Frame<Payload>;
 }
 
-interface CalledEvent<Value> {
+interface QueueItem<Payload> {
   scope: Scope;
-  key: Event<Value> | Store<Value>;
-  value: Value;
+  event: Event<Payload>;
+  payload: Payload;
+  store?: Store<Payload>;
 }
 
 interface Scope {
   payloads: Map<Event<unknown>, unknown>;
   values: Map<Store<unknown>, unknown>;
-  queue: CalledEvent<unknown>[];
+  queue: QueueItem<unknown>[];
   calledEvent: Event<unknown> | null;
   promises: Set<Promise<unknown>>;
+  listeners: Set<(value: undefined) => void>;
 }
 
 const createScope = (): Scope => ({
@@ -30,6 +32,7 @@ const createScope = (): Scope => ({
   queue: [],
   values: new Map(),
   promises: new Set(),
+  listeners: new Set(),
 });
 
 const getPayload = <Payload>(

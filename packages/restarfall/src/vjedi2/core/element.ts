@@ -16,5 +16,5 @@ const createElement = <Args extends unknown[]>(
   return () => toChildList(body(...args));
 };
 
-export type { Element };
+export type { Element, Children };
 export { createElement };

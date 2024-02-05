@@ -1,7 +1,7 @@
 import { contextStack } from "./context";
 import { Element } from "./element";
 import { Event } from "./event";
-import { Scope, createScope } from "./scope";
+import { Scope, createScope, getValue } from "./scope";
 import { Store } from "./store";
 import {
   Tree,
@@ -17,16 +17,6 @@ interface Shape {
   tree: Tree;
 }
 
-interface Dispatch {
-  <Value>(
-    shape: Shape,
-    scope: Scope,
-    key: Event<Value> | Store<Value>,
-    value: Value,
-  ): void;
-  (shape: Shape, scope: Scope, key: Event<void> | Store<void>): void;
-}
-
 const createShape = (): Shape => {
   const shape: Shape = {
     scope: createScope(),
@@ -36,57 +26,40 @@ const createShape = (): Shape => {
   return shape;
 };
 
-const callEvent = <Value>(
-  shape: Shape,
-  scope: Scope,
-  key: Event<Value> | Store<Value>,
-  value: Value,
-): void => {
-  const currTree = shape.tree;
-  const isStore = "changed" in key;
-  const event = isStore ? key.changed : key;
-
-  scope.calledEvent = event;
-  scope.payloads.set(event, value);
-
-  if (isStore) scope.values.set(key, value);
-
-  shape.tree = createTree();
-  contextStack.push({ shape });
-  callDepend(currTree, shape.tree, event);
-  contextStack.pop();
-
-  scope.calledEvent = null;
-
-  const diff = getDiff(currTree, shape.tree);
-
-  diff.detached.forEach((node) => {
-    node.effects.detached.forEach((callback) => callback());
-  });
-  diff.attached.forEach((node) => {
-    node.effects.attached.forEach((callback) => callback());
-  });
-};
-
-const callEvents = (shape: Shape): void => {
-  shape.scope.queue.forEach(({ scope, key, value }) => {
-    callEvent(shape, scope, key, value);
-  });
-  shape.scope.queue = [];
-};
-
-const dispatch: Dispatch = (<Value>(
-  shape: Shape,
-  scope: Scope,
-  key: Event<Value> | Store<Value>,
-  value: Value,
-): void => {
-  shape.scope.queue.push({ scope, key, value });
-
+const parseQueue = (shape: Shape): void => {
   if (contextStack.length > 0) return;
 
-  callEvents(shape);
-}) as Dispatch;
+  for (const item of shape.scope.queue) {
+    const { scope, event, payload, store } = item;
+
+    if (store && getValue(scope, store).value === payload) continue;
+
+    const currTree = shape.tree;
+
+    scope.calledEvent = event;
+    scope.payloads.set(event, payload);
+
+    if (store) scope.values.set(store, payload);
+
+    shape.tree = createTree();
+    contextStack.push({ shape });
+    callDepend(currTree, shape.tree, event);
+    contextStack.pop();
+
+    scope.calledEvent = null;
+
+    const diff = getDiff(currTree, shape.tree);
+
+    diff.detached.forEach((node) => {
+      node.effects.detached.forEach((callback) => callback());
+    });
+    diff.attached.forEach((node) => {
+      node.effects.attached.forEach((callback) => callback());
+    });
+  }
+
+  shape.scope.queue = [];
+};
 
 const attachElement = (shape: Shape, element: Element): void => {
   const length = shape.tree.struct.length;
@@ -101,8 +74,32 @@ const attachElement = (shape: Shape, element: Element): void => {
     );
   }
 
-  callEvents(shape);
+  parseQueue(shape);
+};
+
+const callEvent = <Payload>(
+  shape: Shape,
+  scope: Scope,
+  event: Event<Payload>,
+  payload: Payload,
+): void => {
+  shape.scope.queue.push({ scope, event, payload });
+  parseQueue(shape);
+};
+
+const changeValue = <Value>(
+  shape: Shape,
+  scope: Scope,
+  store: Store<Value>,
+  payload: Value,
+  force = false,
+): void => {
+  shape.scope.queue.push({ scope, event: store.changed, payload, store });
+
+  if (force) scope.values.set(store, payload);
+
+  parseQueue(shape);
 };
 
 export type { Shape };
-export { createShape, dispatch, attachElement };
+export { createShape, attachElement, callEvent, changeValue };

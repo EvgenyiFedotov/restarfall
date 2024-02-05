@@ -1,4 +1,4 @@
-import { attachElement, createShape, dispatch } from "../shape";
+import { createShape, attachElement, callEvent, changeValue } from "../shape";
 import { createScope } from "../scope";
 import { attachNode, createNode, createTree } from "../tree";
 import { createEvent } from "../event";
@@ -17,67 +17,6 @@ describe("createShape", () => {
       scope: createScope(),
       tree: createTree(),
     });
-  });
-});
-
-describe("dispatch", () => {
-  test("by event", () => {
-    const shape = createShape();
-    const event = createEvent<string>();
-
-    dispatch(shape, shape.scope, event, "/");
-
-    expect(shape.scope.payloads.get(event)).toBe("/");
-  });
-
-  test("by event with void parameter", () => {
-    const shape = createShape();
-    const event = createEvent<void>();
-
-    dispatch(shape, shape.scope, event);
-
-    expect(shape.scope.payloads.has(event)).toBe(true);
-  });
-
-  test("by store", () => {
-    const shape = createShape();
-    const store = createStore<string>("_");
-
-    dispatch(shape, shape.scope, store, "/");
-
-    expect(shape.scope.payloads.get(store.changed)).toBe("/");
-    expect(shape.scope.values.get(store)).toBe("/");
-  });
-
-  test("with different scope", () => {
-    const shape = createShape();
-    const event = createEvent<string>();
-    const scope = createScope();
-
-    dispatch(shape, scope, event, "/");
-
-    expect(shape.scope.payloads.has(event)).toBe(false);
-    expect(scope.payloads.has(event)).toBe(true);
-  });
-
-  test("calledEvent", () => {
-    const shape = createShape();
-    const event = createEvent<void>();
-    const element = createElement(() => {
-      getCurrentNodeStrict().depends.push({ event, filter: null });
-      log(shape.scope.calledEvent);
-      return [];
-    }, []);
-    const node = createNode(element);
-
-    contextStack.push({ shape });
-    attachNode(shape.tree, node);
-    contextStack.pop();
-    dispatch(shape, shape.scope, event);
-
-    expect(log.mock.calls[0][0]).toBe(null);
-    expect(log.mock.calls[1][0]).toBe(event);
-    expect(shape.scope.calledEvent).toBe(null);
   });
 });
 
@@ -105,7 +44,7 @@ describe("attachElement", () => {
 
     attachElement(shape, element);
     attachElement(shape, element);
-    dispatch(shape, shape.scope, event, "/");
+    callEvent(shape, shape.scope, event, "/");
 
     expect(detached.mock.calls).toHaveLength(0);
     expect(attached.mock.calls).toHaveLength(2);
@@ -129,9 +68,82 @@ describe("attachElement", () => {
 
     attachElement(shape, element);
     attachElement(shape, element);
-    dispatch(shape, shape.scope, event, "/");
+    callEvent(shape, shape.scope, event, "/");
 
     expect(detached.mock.calls).toHaveLength(8);
     expect(attached.mock.calls).toHaveLength(16);
+  });
+});
+
+describe("callEvent", () => {
+  test("with parameter", () => {
+    const shape = createShape();
+    const event = createEvent<string>();
+
+    callEvent(shape, shape.scope, event, "/");
+
+    expect(shape.scope.payloads.get(event)).toBe("/");
+  });
+
+  test("without parameter", () => {
+    const shape = createShape();
+    const event = createEvent<void>();
+
+    callEvent(shape, shape.scope, event, undefined);
+
+    expect(shape.scope.payloads.has(event)).toBe(true);
+  });
+
+  test("with different scope", () => {
+    const shape = createShape();
+    const event = createEvent<string>();
+    const scope = createScope();
+
+    callEvent(shape, scope, event, "/");
+
+    expect(shape.scope.payloads.has(event)).toBe(false);
+    expect(scope.payloads.has(event)).toBe(true);
+  });
+
+  test("calledEvent", () => {
+    const shape = createShape();
+    const event = createEvent<void>();
+    const element = createElement(() => {
+      getCurrentNodeStrict().depends.push({ event, filter: null });
+      log(shape.scope.calledEvent);
+      return [];
+    }, []);
+    const node = createNode(element);
+
+    contextStack.push({ shape });
+    attachNode(shape.tree, node);
+    contextStack.pop();
+    callEvent(shape, shape.scope, event, undefined);
+
+    expect(log.mock.calls[0][0]).toBe(null);
+    expect(log.mock.calls[1][0]).toBe(event);
+    expect(shape.scope.calledEvent).toBe(null);
+  });
+});
+
+describe("changeValue", () => {
+  test("default", () => {
+    const shape = createShape();
+    const store = createStore<string>("_");
+
+    changeValue(shape, shape.scope, store, "/");
+
+    expect(shape.scope.payloads.get(store.changed)).toBe("/");
+    expect(shape.scope.values.get(store)).toBe("/");
+  });
+
+  test("force", () => {
+    const shape = createShape();
+    const store = createStore<string>("_");
+
+    changeValue(shape, shape.scope, store, "/", true);
+
+    expect(shape.scope.payloads.get(store.changed)).toBe("/");
+    expect(shape.scope.values.get(store)).toBe("/");
   });
 });
